@@ -1,11 +1,3 @@
-// import NextAuth from "next-auth";
-// import { authOptions } from "@/config/authOption";
-
-// const handler = NextAuth(authOptions);
-// export { handler as GET, handler as POST };
-
-// export default NextAuth.default(authOptions)
-
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 // Add more providers if needed
