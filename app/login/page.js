@@ -135,7 +135,7 @@ const page = () => {
           {isSmallScreen && (
             <div className="absolute top-0 left-0 m-4">
               <img
-                src="https://s3.ap-south-1.amazonaws.com/medicom.hexerve/jkare-2.png"
+                src="https://zemez.io/html/wp-content/uploads/sites/9/2017/10/logo.png"
                 alt="Logo"
                 className="h-12"
               />
@@ -154,7 +154,7 @@ const page = () => {
           <div className="absolute inset-0 bg-black opacity-0"></div>
           <div className="absolute top-0 left-0 m-4">
             <img
-              src="https://s3.ap-south-1.amazonaws.com/medicom.hexerve/jkare-2.png"
+              src="https://zemez.io/html/wp-content/uploads/sites/9/2017/10/logo.png"
               alt="Logo"
               className="h-12 md:h-16"
             />

@@ -6,7 +6,7 @@ export async function middleware(req) {
 
   const isAuthenticated = !!token;
 
-  const protectedRoutes = ["/dashboard", "/profile", "/admin"]; // Add routes that need authentication
+  const protectedRoutes = ["/dashboard", "/Aircrafts", "/AircraftModels"]; // Add routes that need authentication
   const isProtectedRoute = protectedRoutes.some((route) =>
     req.nextUrl.pathname.startsWith(route)
   );
@@ -21,5 +21,5 @@ export async function middleware(req) {
 
 // Apply middleware to these routes
 export const config = {
-  matcher: ["/dashboard/:path*", "/profile/:path*", "/admin/:path*"], // Protect these routes
+  matcher: ["/dashboard/:path*", "/Aircrafts/:path*", "/AirCraftModels/:path*"], // Protect these routes
 };
