@@ -62,7 +62,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="dashboard/aircrafts"
+              href="/aircrafts"
               className={`flex items-center p-2 rounded-md ${
                 activeComponent === "aircrafts"
                   ? "bg-purple-600 text-white"
@@ -90,7 +90,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="dashboard/cognitoForm"
+              href="/cognitoForm"
               className={`flex items-center p-2 rounded-md ${
                 activeComponent === "cognitoForm"
                   ? "bg-purple-600 text-white"
@@ -146,7 +146,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="dashboard/aircraftModels"
+              href="/aircraftModels"
               className={`flex items-center p-2 rounded-md ${
                 activeComponent === "aircraftModels"
                   ? "bg-purple-600 text-white"
@@ -174,7 +174,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="dashboard/aircraftBases"
+              href="/aircraftBases"
               className={`flex items-center p-2 rounded-md ${
                 activeComponent === "aircraftBases"
                   ? "bg-purple-600 text-white"

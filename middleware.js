@@ -6,13 +6,21 @@ export async function middleware(req) {
 
   const isAuthenticated = !!token;
 
-  const protectedRoutes = ["/dashboard", "/Aircrafts", "/AircraftModels"]; // Add routes that need authentication
+  const protectedRoutes = [
+    "/dashboard",
+    "/aircraftBases",
+    "/aircraftModels",
+    "/aircrafts",
+    "/aircraftVendors",
+    "/cognitoForm",
+    "/ourServices",
+  ]; // Add routes that need authentication
   const isProtectedRoute = protectedRoutes.some((route) =>
     req.nextUrl.pathname.startsWith(route)
   );
 
   if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL("/login", req.url); // Redirect to login page
+    const loginUrl = new URL("/login", `${req.nextUrl.origin}`); // Redirect to login page
     return NextResponse.redirect(loginUrl);
   }
 
@@ -21,5 +29,13 @@ export async function middleware(req) {
 
 // Apply middleware to these routes
 export const config = {
-  matcher: ["/dashboard/:path*", "/Aircrafts/:path*", "/AirCraftModels/:path*"], // Protect these routes
+  matcher: [
+    "/dashboard/:path*",
+    "/aircraftBases/:path*",
+    "/aircraftModels/:path*",
+    "/aircrafts/:path*",
+    "/aircraftVendors/:path*",
+    "/cognitoForm/:path*",
+    "/ourServices/:path*",
+  ],
 };
