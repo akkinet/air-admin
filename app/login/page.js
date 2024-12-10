@@ -154,9 +154,9 @@ const page = () => {
           <div className="absolute inset-0 bg-black opacity-0"></div>
           <div className="absolute top-0 left-0 m-4">
             <img
-              src="https://zemez.io/html/wp-content/uploads/sites/9/2017/10/logo.png"
+              src="https://www.charterflightsaviation.com/images/logo.png"
               alt="Logo"
-              className="h-12 md:h-16"
+              className="h-18 md:h-28"
             />
           </div>
           <div className="relative z-10 ">

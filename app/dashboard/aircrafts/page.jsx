@@ -53,7 +53,7 @@ const Aircrafts = () => {
   };
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 ">
       {/* Content */}
       <main className="p-6 bg-gray-900 text-white">
         {/* Header Section */}

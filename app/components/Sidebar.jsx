@@ -40,8 +40,8 @@ const Sidebar = () => {
       <div className="bg-gray-900 text-white p-4 shadow-lg flex flex-col w-64">
         <div className="mb-8">
           <img
-            className="h-14 mx-auto"
-            src="https://s3.ap-south-1.amazonaws.com/medicom.hexerve/jkare-2.png"
+            className="h-18 mx-auto"
+            src="https://www.charterflightsaviation.com/images/logo.png"
             alt="Logo"
           />
         </div>
@@ -90,19 +90,19 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="/departments"
+              href="dashboard/cognitoForm"
               className={`flex items-center p-2 rounded-md ${
-                activeComponent === "departments"
+                activeComponent === "cognitoForm"
                   ? "bg-purple-600 text-white"
                   : "text-gray-400"
               } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("departments")}
+              onClick={() => handleSetActive("cognitoForm")}
             >
               <FaBuilding className="text-lg" />
-              <span className="ml-3">Departments</span>
+              <span className="ml-3">Aircraft Listing</span>
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               href="/services"
               className={`flex items-center p-2 rounded-md ${
@@ -115,7 +115,7 @@ const Sidebar = () => {
               <FaBriefcase className="text-lg" />
               <span className="ml-3">Services</span>
             </Link>
-          </li>
+          </li> */}
           <li>
             <Link
               href="/aircraft-vendors"
@@ -174,13 +174,13 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="/aircraft-bases"
+              href="dashboard/aircraftBases"
               className={`flex items-center p-2 rounded-md ${
-                activeComponent === "aircraft-bases"
+                activeComponent === "aircraftBases"
                   ? "bg-purple-600 text-white"
                   : "text-gray-400"
               } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("aircraft-bases")}
+              onClick={() => handleSetActive("aircraftBases")}
             >
               <FaMapMarkerAlt className="text-lg" />
               <span className="ml-3">Aircraft Bases</span>
@@ -200,7 +200,7 @@ const Sidebar = () => {
               <span className="ml-3">Aircraft Seat Modes</span>
             </Link>
           </li>
-          <li>
+          {/* <li>
             <Link
               href="/aircraft-cabin-heights"
               className={`flex items-center p-2 rounded-md ${
@@ -213,8 +213,8 @@ const Sidebar = () => {
               <FaArrowsAltV className="text-lg" />
               <span className="ml-3">Aircraft Cabin Heights</span>
             </Link>
-          </li>
-          <li>
+          </li> */}
+          {/* <li>
             <Link
               href="/settings"
               className={`flex items-center p-2 rounded-md ${
@@ -227,7 +227,15 @@ const Sidebar = () => {
               <FaCogs className="text-lg" />
               <span className="ml-3">Settings</span>
             </Link>
-          </li>
+          </li> */}
+          <form action="/api/auth/signout" method="POST">
+          <button
+            className="block w-full px-6 py-3 mt-6 text-left text-gray-600 hover:bg-red-100 hover:text-red-600"
+            type="submit"
+          >
+            Logout
+          </button>
+        </form>
           {/* <li>
             <Link
               href="/app-versions"
