@@ -1,4 +1,4 @@
-import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { ddbDocClient } from "@/config/docClient";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
@@ -104,6 +104,26 @@ export async function POST(req) {
     console.error("DynamoDB Error:", error);
     return new Response(
       JSON.stringify({ message: "Failed to store data", error }),
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req) {
+  try{
+    const params = {
+      TableName: "AIR_VENDOR",
+    };
+
+    const data = await ddbDocClient.send(new ScanCommand(params));
+    return new Response(
+      JSON.stringify(data.Items),
+      { status: 200 }
+    );
+  }catch(error){
+    console.error("DynamoDB Error:", error);
+    return new Response(
+      JSON.stringify({ message: "Failed to fetch data", error }),
       { status: 500 }
     );
   }
