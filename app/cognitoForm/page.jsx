@@ -1,23 +1,31 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 const CognitoForm = () => {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // Ensuring that this component does'nt render on the server.
+  }
+
   return (
-    <div className="p-4" style={{ overflow: "hidden" }}>
-      {/* Embedded Cognito Form using iframe */}
+    <>
       <iframe
+        className=" w-full h-full p-4"
         src="https://www.cognitoforms.com/f/EKmVxlM-lU29YZL6o1MZCw/1"
         allow="payment"
-        style={{
-          border: 0,
-          width: "100%",
-          height: "1124px",
-          overflowX: "hidden",
-        }}
         title="Cognito Form"
-        scrolling="no" // Prevents the iframe scrollbar
+        data-cog-init="true"
       ></iframe>
       <script src="https://www.cognitoforms.com/f/iframe.js"></script>
-    </div>
+    </>
+
   );
 };
+
 export default CognitoForm;

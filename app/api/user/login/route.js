@@ -28,14 +28,8 @@ export const POST = async (req) => {
     
     delete user.password;
     
-    const rolRes = await ddbDocClient.send(new GetCommand({
-      TableName: "Role",
-      Key: { name: user.role },
-    }));
-    const roleData = rolRes.Item;
-
     return NextResponse.json(
-      {...user, role: roleData.name, actions: Array.from(roleData.actions)},
+      {...user},
       { status: 200 }
     );
   } catch (err) {

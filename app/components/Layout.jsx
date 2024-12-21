@@ -26,9 +26,9 @@ function Layout({ children }) {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 pl-2  flex flex-col h-[100vh]">
-        <div className="flex-shrink-0">
+        {/* <div className="flex-shrink-0">
           <Navbar />
-        </div>
+        </div> */}
         <div className="flex-1 overflow-auto">
           {children}
         </div>
