@@ -10,7 +10,7 @@ export async function POST(req) {
       lastName,
       email,
       corporateName,
-      opCoverage,
+      operationCoverage,
       addressLine1,
       addressLine2,
       city,
@@ -18,16 +18,9 @@ export async function POST(req) {
       zipCode,
       phone,
       additionalPhone,
-      socialLinks,
+      socialLinks, // array of links
       branches, // Array of branches
     } = body;
-
-    if (!firstName || !lastName || !email || !addressLine1) {
-      return new Response(
-        JSON.stringify({ message: "Required fields are missing" }),
-        { status: 400 }
-      );
-    }
 
     const counterParams = {
       TableName: "AIR_COUNTER",
@@ -61,7 +54,7 @@ export async function POST(req) {
         const extension = fileName.slice(lastDot + 1);
         const newFileName = `vendors/${vendorId}/${file_name}_${new Date().getTime()}.${extension}`;
         const params = {
-          Bucket: "medicom.hexerve",
+          Bucket: process.env.AWS_S3_BUCKET,
           Key: newFileName,
           Body: fileBuffer,
           ContentType: fileType,
@@ -70,7 +63,6 @@ export async function POST(req) {
         branch.file = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET}/${newFileName}`;
       }
     }
-
     const params = {
       TableName: "AIR_VENDOR",
       Item: {
@@ -78,7 +70,7 @@ export async function POST(req) {
         firstName,
         lastName,
         corporateName,
-        opCoverage,
+        operationCoverage,
         branches,
         email,
         addressLine1,
@@ -110,17 +102,14 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
-  try{
+  try {
     const params = {
       TableName: "AIR_VENDOR",
     };
 
     const data = await ddbDocClient.send(new ScanCommand(params));
-    return new Response(
-      JSON.stringify(data.Items),
-      { status: 200 }
-    );
-  }catch(error){
+    return new Response(JSON.stringify(data.Items), { status: 200 });
+  } catch (error) {
     console.error("DynamoDB Error:", error);
     return new Response(
       JSON.stringify({ message: "Failed to fetch data", error }),

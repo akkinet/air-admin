@@ -20,39 +20,58 @@ import {
 
 export default function BusinessInformationForm() {
   const [formData, setFormData] = useState({
-    corporateOffice: "",
+    corporateName: "",
     email: "",
     addressLine1: "",
     addressLine2: "",
     city: "",
     state: "",
     zipCode: "",
-    vendorFirstName: "",
-    vendorLastName: "",
-    operationsCoverage: "",
+    firstName: "",
+    lastName: "",
+    operationCoverage: "",
     operationsType: [],
-    primaryPhone: "",
+    phone: "",
     baseCountry: "India",
-    // baseCity: "",
-    // companyName: "",
-    // vendorName: "",
-    additionalPhone1: "",
+    additionalPhone: "",
     additionalPhone2: "",
-    facebook: "",
-    instagram: "",
-    twitter: "",
-    whatsapp: "",
+    socialLinks: [],
     contactPreference: "phone",
     businessDescription: "",
   });
 
   const [errors, setErrors] = useState({});
-  const [branches, setBranches] = useState([{ branchId: 1 }]); // Branch 1 added by default
-  const [hasBranches, setHasBranches] = useState(false); // To track "Yes" or "No"
+  const [branches, setBranches] = useState([{ branchId: 1, file: null }]);
+  const [hasBranches, setHasBranches] = useState(false);  // Default to "No"
+
 
   const addBranch = () => {
     setBranches([...branches, { branchId: branches.length + 1 }]);
   };
+  const handleFileChange = (index, e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const updatedBranches = [...branches];
+      updatedBranches[index] = {
+        ...updatedBranches[index],
+        file: {
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          filePreview: reader.result,
+        },
+      };
+
+      setBranches(updatedBranches);
+    };
+
+    reader.readAsDataURL(file);
+  }
+};
+
 
 
 
@@ -76,8 +95,8 @@ export default function BusinessInformationForm() {
             error = "Invalid email address.";
           }
           break;
-        case "primaryPhone":
-        case "additionalPhone1":
+        case "phone":
+        case "additionalPhone":
         case "additionalPhone2":
         case "whatsapp":
           if (value && !/^\d{10,15}$/.test(value)) {
@@ -108,37 +127,29 @@ const handleChange = (e) => {
         ? [...prev.operationsType, value]
         : prev.operationsType.filter((item) => item !== value),
     }));
+  } else if (["facebook", "instagram", "twitter", "whatsapp"].includes(name)) {
+    setFormData((prev) => {
+      const socialLinks = prev.socialLinks.filter((link) => link.type !== name);
+      if (value) {
+        socialLinks.push({ type: name, value });
+      }
+      console.log("Updated Social Links:", socialLinks);  // Log social links
+      return { ...prev, socialLinks };
+    });
   } else {
     const error = validateField(name, value);
-
-    if (name.startsWith("departmentName_") || name.startsWith("contactNo_") || name.startsWith("email_") || name.startsWith("photo_") || name.startsWith("addressLine1_") || name.startsWith("addressLine2_") || name.startsWith("city_") || name.startsWith("state_") || name.startsWith("zipCode_")) {
-      // Update branch-specific state
-      const [fieldKey, index] = name.split("_");
-      setBranches((prev) =>
-        prev.map((branch, i) => {
-          if (i === parseInt(index, 10)) {
-            return { ...branch, [fieldKey]: value };
-          }
-          return branch;
-        })
-      );
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
-    } else {
-      // Update main form state
-      setFormData((prev) => ({ ...prev, [name]: value }));
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
   }
 };
 
 
 const handleSubmit = (e) => {
   e.preventDefault();
-
-  // Validate Main Form
   const newErrors = {};
   const missingFields = [];
 
+  // Validate main form fields
   Object.keys(formData).forEach((key) => {
     const error = validateField(key, formData[key]);
     if (error) {
@@ -147,7 +158,7 @@ const handleSubmit = (e) => {
     }
   });
 
-  // Validate Branches
+  // Validate branches
   branches.forEach((branch, index) => {
     Object.keys(branch).forEach((key) => {
       const fieldName = `${key}_${index}`;
@@ -159,7 +170,6 @@ const handleSubmit = (e) => {
     });
   });
 
-  // Set Errors
   setErrors(newErrors);
 
   if (Object.keys(newErrors).length > 0) {
@@ -172,14 +182,39 @@ const handleSubmit = (e) => {
         return field;
       })
       .join(", ");
-
     alert(`Please fill in all required fields: ${fieldNames}`);
   } else {
-    console.log("Main Form Data:", formData);
-    console.log("Branch Data:", branches); // This now includes photo, address, city, state, and zip code
-    alert("Form submitted successfully!");
+    const dataToSend = {
+      ...formData,
+      branches: hasBranches ? branches : [],
+    };
+
+    console.log("Payload to Send:", dataToSend);
+
+    fetch("http://localhost:3000/api/vendor", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dataToSend),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to submit form");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        alert("Form submitted successfully!");
+      })
+      .catch((error) => {
+        alert("Failed to submit form. Please try again.");
+      });
   }
 };
+
+
+
 
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 mt-5 font-medium italic">
@@ -222,42 +257,42 @@ const handleSubmit = (e) => {
         <fieldset className="border-2 border-gray-500 rounded p-4">
           <legend className="font-semibold text-xl">Business Details</legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-          <div>
-            <label className=" mb-2 flex items-center gap-2">
-              <span className="text-blue-500">
-                <FaUser />
-              </span>
-              Vendor / Operator First Name
-            </label>
-            <input
-              type="text"
-              name="vendorFirstName"
-              onChange={handleChange}
-              placeholder="Enter the first word of name"
-              className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic"
-            />
-            {errors.vendorFirstName && (
-              <p className="text-red-500 text-sm">{errors.vendorFirstName}</p>
-            )}
-          </div>
-          <div>
-            <label className="  mb-2 flex items-center gap-2">
-              <span className="text-blue-500">
-                <FaUser />
-              </span>
-              Vendor / Operator Last Name
-            </label>
-            <input
-              type="text"
-              name="vendorLastName"
-              onChange={handleChange}
-              placeholder="Enter the last word of name"
-              className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic "
-            />
-            {errors.vendorLastName && (
-              <p className="text-red-500 text-sm">{errors.vendorLastName}</p>
-            )}
-          </div>
+            <div>
+              <label className=" mb-2 flex items-center gap-2">
+                <span className="text-blue-500">
+                  <FaUser />
+                </span>
+                Vendor / Operator First Name
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                onChange={handleChange}
+                placeholder="Enter the first word of name"
+                className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic"
+              />
+              {errors.firstName && (
+                <p className="text-red-500 text-sm">{errors.firstName}</p>
+              )}
+            </div>
+            <div>
+              <label className="  mb-2 flex items-center gap-2">
+                <span className="text-blue-500">
+                  <FaUser />
+                </span>
+                Vendor / Operator Last Name
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                onChange={handleChange}
+                placeholder="Enter the last word of name"
+                className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic "
+              />
+              {errors.lastName && (
+                <p className="text-red-500 text-sm">{errors.lastName}</p>
+              )}
+            </div>
             <div>
               <label className="  mb-2 flex items-center gap-2">
                 <span className="text-blue-500">
@@ -267,13 +302,13 @@ const handleSubmit = (e) => {
               </label>
               <input
                 type="text"
-                name="corporateOffice"
+                name="corporateName"
                 onChange={handleChange}
                 placeholder="Enter office name"
                 className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
               />
-              {errors.corporateOffice && (
-                <p className="text-red-500 text-sm">{errors.corporateOffice}</p>
+              {errors.corporateName && (
+                <p className="text-red-500 text-sm">{errors.corporateName}</p>
               )}
             </div>
             <div>
@@ -392,7 +427,7 @@ const handleSubmit = (e) => {
                 Operations Coverage
               </label>
               <select
-                name="operationsCoverage"
+                name="operationCoverage"
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded px-4  py-1"
               >
@@ -401,8 +436,8 @@ const handleSubmit = (e) => {
                 <option value="national">National</option>
                 <option value="international">International</option>
               </select>
-              {errors.operationsCoverage && (
-                <p className="text-red-500 text-sm">{errors.operationsCoverage}</p>
+              {errors.operationCoverage && (
+                <p className="text-red-500 text-sm">{errors.operationCoverage}</p>
               )}
             </div>
             <div>
@@ -414,13 +449,13 @@ const handleSubmit = (e) => {
               </label>
               <input
                 type="tel"
-                name="primaryPhone"
+                name="phone"
                 onChange={handleChange}
                 placeholder="Enter your primary phone number"
                 className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
               />
-              {errors.primaryPhone && (
-                <p className="text-red-500 text-sm">{errors.primaryPhone}</p>
+              {errors.phone && (
+                <p className="text-red-500 text-sm">{errors.phone}</p>
               )}
             </div>
             <div>
@@ -432,20 +467,20 @@ const handleSubmit = (e) => {
               </label>
               <input
                 type="tel"
-                name="additionalPhone1"
+                name="additionalPhone"
                 onChange={handleChange}
                 placeholder="Enter your additional phone number"
                 className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
               />
-              {errors.additionalPhone1 && (
-                <p className="text-red-500 text-sm">{errors.additionalPhone1}</p>
+              {errors.additionalPhone && (
+                <p className="text-red-500 text-sm">{errors.additionalPhone}</p>
               )}
             </div>
           </div>
         </fieldset>
 
         {/* Social Links */}
-       <fieldset className="border-2 border-gray-500 rounded p-4">
+        <fieldset className="border-2 border-gray-500 rounded p-4">
           <legend className="font-semibold text-xl">Social Links</legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
             <div>
@@ -489,7 +524,7 @@ const handleSubmit = (e) => {
                 <span className="text-blue-500">
                   <FaTwitter />
                 </span>
-               X / Twitter
+                X / Twitter
               </label>
               <input
                 type="text"
@@ -532,21 +567,20 @@ const handleSubmit = (e) => {
                 type="radio"
                 name="hasBranches"
                 value="yes"
+                checked={hasBranches}
                 onChange={() => setHasBranches(true)}
-              />{" "}
-              Yes
-            </label>
-            <label>
+              /> Yes
               <input
                 type="radio"
                 name="hasBranches"
                 value="no"
+                checked={!hasBranches}
                 onChange={() => {
                   setHasBranches(false);
-                  setBranches([{ branchId: 1 }]); // Reset branches
+                  setBranches([]); // Send empty branches when "No" is selected
                 }}
-              />{" "}
-              No
+              /> No
+
             </label>
           </div>
         </div>
@@ -605,8 +639,8 @@ const handleSubmit = (e) => {
                       type="file"
                       name={`photo_${index}`}
                       className="border border-gray-300 rounded px-4  py-1 w-full"
-                      onChange={handleChange}
-                      
+                      onChange={(e)=>handleFileChange(index , e)}
+
                     />
                     <FaUpload className="text-gray-500" />
                   </div>
@@ -633,41 +667,41 @@ const handleSubmit = (e) => {
                   />
                 </div>
 
-               
+
 
               </div>
               <div className="grid grid-cols-3 gap-4 mt-2">
-                  <div>
-                    <label className="block mb-2">City</label>
-                    <input
-                      type="text"
-                      name={`city_${index}`}
-                      className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-                      onChange={handleChange}
-                      placeholder="Enter your city"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2">State</label>
-                    <input
-                      type="text"
-                      name={`state_${index}`}
-                      className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-                      onChange={handleChange}
-                      placeholder="Enter your state"
-                    />
-                  </div>
-                  <div>
-                    <label className="block mb-2">Zip Code</label>
-                    <input
-                      type="text"
-                      name={`zipCode_${index}`}
-                      className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-                      onChange={handleChange}
-                      placeholder="Enter your zip code"
-                    />
-                  </div>
+                <div>
+                  <label className="block mb-2">City</label>
+                  <input
+                    type="text"
+                    name={`city_${index}`}
+                    className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
+                    onChange={handleChange}
+                    placeholder="Enter your city"
+                  />
                 </div>
+                <div>
+                  <label className="block mb-2">State</label>
+                  <input
+                    type="text"
+                    name={`state_${index}`}
+                    className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
+                    onChange={handleChange}
+                    placeholder="Enter your state"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-2">Zip Code</label>
+                  <input
+                    type="text"
+                    name={`zipCode_${index}`}
+                    className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
+                    onChange={handleChange}
+                    placeholder="Enter your zip code"
+                  />
+                </div>
+              </div>
             </fieldset>
           ))}
 
