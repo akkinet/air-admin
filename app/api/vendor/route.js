@@ -18,8 +18,9 @@ export async function POST(req) {
       zipCode,
       phone,
       additionalPhone,
-      socialLinks, // array of links
+      socialLinks, 
       branches, // Array of branches
+      businessDescription,
     } = body;
 
     const counterParams = {
@@ -81,6 +82,7 @@ export async function POST(req) {
         zipCode,
         phone,
         socialLinks,
+        businessDescription,
         branches: branches || [], // Store branches or empty array if none
         createdAt: new Date().toISOString(),
       },

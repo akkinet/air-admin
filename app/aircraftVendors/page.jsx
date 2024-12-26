@@ -15,8 +15,12 @@ import {
   FaGlobe,
   FaPhoneAlt,
   FaTwitter,
-  FaUpload
+  FaUpload,
+  FaLinkedin,
+  FaSnapchat
 } from "react-icons/fa";
+import SocialLinks from "../components/SocialLinks";
+
 
 export default function BusinessInformationForm() {
   const [formData, setFormData] = useState({
@@ -41,36 +45,43 @@ export default function BusinessInformationForm() {
   });
 
   const [errors, setErrors] = useState({});
-  const [branches, setBranches] = useState([{ branchId: 1, file: null }]);
+  const [branches, setBranches] = useState([{ branchId: 1, file: null, socialLinks: [] }]);
+
   const [hasBranches, setHasBranches] = useState(false);  // Default to "No"
 
 
   const addBranch = () => {
-    setBranches([...branches, { branchId: branches.length + 1 }]);
+    setBranches([...branches, { branchId: branches.length + 1, file: null, socialLinks: [] }]);
   };
-  const handleFileChange = (index, e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
 
-    reader.onloadend = () => {
-      const updatedBranches = [...branches];
-      updatedBranches[index] = {
-        ...updatedBranches[index],
-        file: {
-          fileName: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-          filePreview: reader.result,
-        },
+  const handleFileChange = (index, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const updatedBranches = [...branches];
+        updatedBranches[index] = {
+          ...updatedBranches[index],
+          file: {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            filePreview: reader.result,
+          },
+        };
+
+        setBranches(updatedBranches);
       };
 
-      setBranches(updatedBranches);
-    };
+      reader.readAsDataURL(file);
+    }
+  };
 
-    reader.readAsDataURL(file);
-  }
-};
+  const handleDeleteBranch = (index) => {
+    const updatedBranches = branches.filter((_, i) => i !== index);
+    setBranches(updatedBranches);
+  };
 
 
 
@@ -120,29 +131,69 @@ export default function BusinessInformationForm() {
 const handleChange = (e) => {
   const { name, value, type, checked } = e.target;
 
-  if (type === "checkbox") {
-    setFormData((prev) => ({
-      ...prev,
-      operationsType: checked
-        ? [...prev.operationsType, value]
-        : prev.operationsType.filter((item) => item !== value),
-    }));
-  } else if (["facebook", "instagram", "twitter", "whatsapp"].includes(name)) {
-    setFormData((prev) => {
-      const socialLinks = prev.socialLinks.filter((link) => link.type !== name);
-      if (value) {
-        socialLinks.push({ type: name, value });
+  const branchRegex = /^(\d+)_(\w+)$/;
+  const match = name.match(branchRegex);
+
+  if (match) {
+    const branchIndex = parseInt(match[1], 10);
+    const field = match[2];
+
+    const updatedBranches = [...branches];
+
+    // Ensure branch exists
+    if (!updatedBranches[branchIndex]) {
+      updatedBranches[branchIndex] = { socialLinks: [] };
+    }
+
+    // Ensure socialLinks array is initialized
+    if (!updatedBranches[branchIndex].socialLinks) {
+      updatedBranches[branchIndex].socialLinks = [];
+    }
+
+    // Handle social links dynamically
+    if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(field)) {
+      const existingLinkIndex = updatedBranches[branchIndex].socialLinks.findIndex(
+        (link) => link.type === field
+      );
+
+      if (existingLinkIndex > -1) {
+        updatedBranches[branchIndex].socialLinks[existingLinkIndex].value = value;
+      } else {
+        updatedBranches[branchIndex].socialLinks.push({ type: field, value });
       }
-      console.log("Updated Social Links:", socialLinks);  // Log social links
-      return { ...prev, socialLinks };
-    });
+    } else {
+      // ✅ Update non-social link fields without overwriting
+      updatedBranches[branchIndex][field] = value;
+    }
+
+    setBranches(updatedBranches);
   } else {
-    const error = validateField(name, value);
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+    // Main form fields
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        operationsType: checked
+          ? [...prev.operationsType, value]
+          : prev.operationsType.filter((item) => item !== value),
+      }));
+    }
+    // Handle main form social links
+    else if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(name)) {
+      setFormData((prev) => {
+        const socialLinks = prev.socialLinks.filter((link) => link.type !== name);
+        if (value) {
+          socialLinks.push({ type: name, value });
+        }
+        return { ...prev, socialLinks };
+      });
+    } else {
+      // Regular main form fields
+      const error = validateField(name, value);
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+    }
   }
 };
-
 
 const handleSubmit = (e) => {
   e.preventDefault();
@@ -186,7 +237,23 @@ const handleSubmit = (e) => {
   } else {
     const dataToSend = {
       ...formData,
-      branches: hasBranches ? branches : [],
+      branches: branches.map((branch, index) => {
+        const branchFields = {};
+        
+        // Extract dynamic branch fields from formData
+        Object.keys(formData).forEach((key) => {
+          if (key.endsWith(`_${index}`)) {
+            const fieldName = key.split("_")[0];
+            branchFields[fieldName] = formData[key];
+          }
+        });
+
+        return {
+          ...branch,
+          ...branchFields,  // Merge the extracted fields into the branch object
+          socialLinks: branch.socialLinks || [],
+        };
+      }),
     };
 
     console.log("Payload to Send:", dataToSend);
@@ -212,9 +279,6 @@ const handleSubmit = (e) => {
       });
   }
 };
-
-
-
 
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 mt-5 font-medium italic">
@@ -480,83 +544,10 @@ const handleSubmit = (e) => {
         </fieldset>
 
         {/* Social Links */}
-        <fieldset className="border-2 border-gray-500 rounded p-4">
-          <legend className="font-semibold text-xl">Social Links</legend>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div>
-              <label className="  mb-2 flex items-center gap-2">
-                <span className="text-blue-500">
-                  <FaFacebook />
-                </span>
-                Facebook
-              </label>
-              <input
-                type="text"
-                name="facebook"
-                onChange={handleChange}
-                placeholder="Enter your facebook account link"
-                className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-              />
-              {errors.facebook && (
-                <p className="text-red-500 text-sm">{errors.facebook}</p>
-              )}
-            </div>
-            <div>
-              <label className="  mb-2 flex items-center gap-2">
-                <span className="text-blue-500">
-                  <FaInstagram />
-                </span>
-                Instagram
-              </label>
-              <input
-                type="text"
-                name="instagram"
-                onChange={handleChange}
-                placeholder="Enter your instagram account link"
-                className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-              />
-              {errors.instagram && (
-                <p className="text-red-500 text-sm">{errors.instagram}</p>
-              )}
-            </div>
-            <div>
-              <label className="  mb-2 flex items-center gap-2">
-                <span className="text-blue-500">
-                  <FaTwitter />
-                </span>
-                X / Twitter
-              </label>
-              <input
-                type="text"
-                name="twitter"
-                onChange={handleChange}
-                placeholder="Enter your Twitter / X account link"
-                className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-              />
-              {errors.twitter && (
-                <p className="text-red-500 text-sm">{errors.twitter}</p>
-              )}
-            </div>
-            <div>
-              <label className="  mb-2 flex items-center gap-2">
-                <span className="text-blue-500">
-                  <FaWhatsapp />
-                </span>
-                WhatsApp
-              </label>
-              <input
-                type="tel"
-                name="whatsapp"
-                onChange={handleChange}
-                placeholder="Enter your official whatsapp no."
-                className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
-              />
-              {errors.whatsapp && (
-                <p className="text-red-500 text-sm">{errors.whatsapp}</p>
-              )}
-            </div>
-          </div>
-        </fieldset>
+        <SocialLinks prefix="" handleChange={handleChange} errors={errors} />
+
+
+
         <div className="">
           <label className="block mb-2 font-semibold">
             Do you have another branch in any country?
@@ -639,7 +630,7 @@ const handleSubmit = (e) => {
                       type="file"
                       name={`photo_${index}`}
                       className="border border-gray-300 rounded px-4  py-1 w-full"
-                      onChange={(e)=>handleFileChange(index , e)}
+                      onChange={(e) => handleFileChange(index, e)}
 
                     />
                     <FaUpload className="text-gray-500" />
@@ -655,7 +646,7 @@ const handleSubmit = (e) => {
                     onChange={handleChange}
                     placeholder="Enter your address"
                   />
-                </div>t5
+                </div>
                 <div className="col-span-2">
                   <label className="block mb-2">Address Line 2</label>
                   <input
@@ -702,6 +693,18 @@ const handleSubmit = (e) => {
                   />
                 </div>
               </div>
+              <SocialLinks
+                  prefix={`${index}_`}  // Dynamic prefix per branch
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+              <button
+                type="button"
+                onClick={() => handleDeleteBranch(index)}
+                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Delete Branch
+              </button>
             </fieldset>
           ))}
 
