@@ -4,9 +4,6 @@ import {
   FaUser,
   FaPhone,
   FaEnvelope,
-  FaFacebook,
-  FaInstagram,
-  FaWhatsapp,
   FaBuilding,
   FaMapMarkerAlt,
   FaCity,
@@ -14,10 +11,8 @@ import {
   FaMapPin,
   FaGlobe,
   FaPhoneAlt,
-  FaTwitter,
   FaUpload,
-  FaLinkedin,
-  FaSnapchat
+
 } from "react-icons/fa";
 import SocialLinks from "../components/SocialLinks";
 

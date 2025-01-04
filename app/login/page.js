@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 const useResponsiveBackground = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 640px)"); // Tailwind's sm breakpoint
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
 
     const handleMediaQueryChange = (event) => {
       setIsSmallScreen(event.matches);
@@ -122,15 +123,14 @@ const page = () => {
               <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
               <span className="relative">Log In</span>
             </button>
-
-            <a
-              href="#"
+            <Link
+              href={"/aircraftVendors"}
               className={`block mt-2 md:mt-4 text-center ${
                 isSmallScreen ? "text-customBlue" : "text-pink-500"
               }`}
             >
-              Forgot Password? Contact your (Super Admin)
-            </a>
+              Don't have credentials to login? (Sign Up Here)
+            </Link>
           </form>
           {isSmallScreen && (
             <div className="absolute top-0 left-0 m-4">

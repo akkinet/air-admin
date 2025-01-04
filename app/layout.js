@@ -9,12 +9,6 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   return (
     <html lang="en">
-        {/* <script
-          src="https://www.cognitoforms.com/f/seamless.js"
-          async
-          data-key="EKmVxlM-lU29YZL6o1MZCw"
-          data-form="1"
-        ></script> */}
       <body>
         <AuthProvider>
           <Layout>{children}</Layout>

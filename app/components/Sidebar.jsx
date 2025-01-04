@@ -3,17 +3,13 @@
 import React, { useState, useEffect } from "react";
 import {
   FaChartLine,
-  FaUserShield,
   FaPlane,
   FaUsers,
   FaBuilding,
-  FaBriefcase,
   FaStore,
   FaBox,
-  FaCogs,
   FaMapMarkerAlt,
   FaCouch,
-  FaArrowsAltV,
   FaPlaneDeparture,
 } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
@@ -125,20 +121,6 @@ const Sidebar = () => {
               <span className="ml-3">Aircraft Listing</span>
             </Link>
           </li>
-          {/* <li>
-            <Link
-              href="/services"
-              className={`flex items-center p-2 rounded-md ${
-                activeComponent === "services"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-400"
-              } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("services")}
-            >
-              <FaBriefcase className="text-lg" />
-              <span className="ml-3">Services</span>
-            </Link>
-          </li> */}
           <li>
             <Link
               href="/aircraftVendors"
@@ -217,49 +199,19 @@ const Sidebar = () => {
               <span className="ml-3">Aircraft Seat Modes</span>
             </Link>
           </li>
-          {/* <li>
+          <li>
             <Link
-              href="/aircraft-cabin-heights"
-              className={`flex items-center p-2 rounded-md ${
-                activeComponent === "aircraft-cabin-heights"
+              href="/fleetRegistration"
+              className={`flex items-center p-2 rounded-md ${activeComponent === "fleetRegistration"
                   ? "bg-purple-600 text-white"
                   : "text-gray-400"
-              } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("aircraft-cabin-heights")}
+                } hover:bg-purple-500 hover:text-white`}
+              onClick={() => handleSetActive("fleetRegistration")}
             >
-              <FaArrowsAltV className="text-lg" />
-              <span className="ml-3">Aircraft Cabin Heights</span>
+              <FaCouch className="text-lg" />
+              <span className="ml-3">Fleet Registration form</span>
             </Link>
-          </li> */}
-          {/* <li>
-            <Link
-              href="/settings"
-              className={`flex items-center p-2 rounded-md ${
-                activeComponent === "settings"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-400"
-              } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("settings")}
-            >
-              <FaCogs className="text-lg" />
-              <span className="ml-3">Settings</span>
-            </Link>
-          </li> */}
-      
-          {/* <li>
-            <Link
-              href="/app-versions"
-              className={`flex items-center p-2 rounded-md ${
-                activeComponent === "app-versions"
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-400"
-              } hover:bg-purple-500 hover:text-white`}
-              onClick={() => handleSetActive("app-versions")}
-            >
-              <FaCogs className="text-lg" />
-              <span className="ml-3">App Versions</span>
-            </Link>
-          </li> */}
+          </li>
         </ul>
       </div>
     </div>

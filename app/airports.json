@@ -1,0 +1,122 @@
+{
+  "United States": [
+      "Los Angeles International Airport",
+      "John F. Kennedy International Airport",
+      "Chicago O'Hare International Airport",
+      "San Francisco International Airport",
+      "Dallas/Fort Worth International Airport",
+      "Denver International Airport",
+      "Seattle-Tacoma International Airport",
+      "Miami International Airport",
+      "Hartsfield-Jackson Atlanta International Airport",
+      "Boston Logan International Airport"
+  ],
+  "Canada": [
+      "Toronto Pearson International Airport",
+      "Vancouver International Airport",
+      "Calgary International Airport",
+      "Montréal-Pierre Elliott Trudeau International Airport",
+      "Edmonton International Airport",
+      "Ottawa Macdonald-Cartier International Airport",
+      "Halifax Stanfield International Airport",
+      "Winnipeg James Armstrong Richardson International Airport",
+      "Billy Bishop Toronto City Airport",
+      "Victoria International Airport"
+  ],
+  "United Kingdom": [
+      "Heathrow Airport",
+      "Gatwick Airport",
+      "Manchester Airport",
+      "London Stansted Airport",
+      "Luton Airport",
+      "Birmingham Airport",
+      "Edinburgh Airport",
+      "Glasgow Airport",
+      "Bristol Airport",
+      "Newcastle International Airport"
+  ],
+  "Germany": [
+      "Frankfurt Airport",
+      "Munich Airport",
+      "Berlin Brandenburg Airport",
+      "Hamburg Airport",
+      "Düsseldorf Airport",
+      "Stuttgart Airport",
+      "Cologne Bonn Airport",
+      "Leipzig/Halle Airport",
+      "Nuremberg Airport",
+      "Hannover Airport"
+  ],
+  "France": [
+      "Charles de Gaulle Airport",
+      "Orly Airport",
+      "Nice Côte d'Azur Airport",
+      "Lyon-Saint Exupéry Airport",
+      "Marseille Provence Airport",
+      "Toulouse-Blagnac Airport",
+      "Bordeaux-Mérignac Airport",
+      "Nantes Atlantique Airport",
+      "Strasbourg Airport",
+      "Lille Airport"
+  ],
+  "Japan": [
+      "Narita International Airport",
+      "Haneda Airport",
+      "Kansai International Airport",
+      "Chubu Centrair International Airport",
+      "Osaka International Airport",
+      "Fukuoka Airport",
+      "New Chitose Airport",
+      "Naha Airport",
+      "Sendai Airport",
+      "Kagoshima Airport"
+  ],
+  "Australia": [
+      "Sydney Kingsford Smith Airport",
+      "Melbourne Airport",
+      "Brisbane Airport",
+      "Perth Airport",
+      "Adelaide Airport",
+      "Gold Coast Airport",
+      "Canberra Airport",
+      "Hobart Airport",
+      "Darwin International Airport",
+      "Cairns Airport"
+  ],
+  "India": [
+      "Indira Gandhi International Airport",
+      "Chhatrapati Shivaji Maharaj International Airport",
+      "Kempegowda International Airport",
+      "Chennai International Airport",
+      "Netaji Subhas Chandra Bose International Airport",
+      "Rajiv Gandhi International Airport",
+      "Pune Airport",
+      "Sardar Vallabhbhai Patel International Airport",
+      "Goa International Airport",
+      "Cochin International Airport"
+  ],
+  "Brazil": [
+      "São Paulo/Guarulhos International Airport",
+      "Rio de Janeiro/Galeão International Airport",
+      "Brasília International Airport",
+      "São Paulo-Congonhas Airport",
+      "Viracopos International Airport",
+      "Porto Alegre International Airport",
+      "Recife/Guararapes International Airport",
+      "Salvador International Airport",
+      "Belo Horizonte International Airport",
+      "Manaus International Airport"
+  ],
+  "South Africa": [
+      "O.R. Tambo International Airport",
+      "Cape Town International Airport",
+      "King Shaka International Airport",
+      "Lanseria International Airport",
+      "Port Elizabeth International Airport",
+      "East London Airport",
+      "George Airport",
+      "Kimberley Airport",
+      "Upington International Airport",
+      "Bloemfontein Airport"
+  ]
+}

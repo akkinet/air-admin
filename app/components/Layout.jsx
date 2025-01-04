@@ -1,12 +1,11 @@
 "use client";
-import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { usePathname } from "next/navigation";
 // import nProgress from "nprogress";
-import { useEffect } from "react";
 
 function Layout({ children }) {
   const pathname = usePathname();
+  
 
   // useEffect(() => {
   //   const handleStart = () => nProgress.start();
@@ -26,14 +25,10 @@ function Layout({ children }) {
     <div className="flex">
       <Sidebar />
       <div className="flex-1 pl-2  flex flex-col h-[100vh]">
-        {/* <div className="flex-shrink-0">
-          <Navbar />
-        </div> */}
         <div className="flex-1 overflow-auto">
           {children}
         </div>
       </div>
-
     </div>
   );
 }
