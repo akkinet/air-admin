@@ -18,7 +18,7 @@ export async function POST(req) {
       zipCode,
       phone,
       additionalPhone,
-      socialLinks, 
+      socialLinks,
       branches, // Array of branches
       businessDescription,
     } = body;
@@ -104,10 +104,25 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const email = searchParams.get("email");
   try {
     const params = {
       TableName: "AIR_VENDOR",
     };
+
+    if (email) {
+      params.FilterExpression = "email = :email";
+      params.ExpressionAttributeValues = {
+        ":email": email,
+      };
+
+      const data = await ddbDocClient.send(new ScanCommand(params));
+      if(data.Count === 0) {
+        return new Response(JSON.stringify({ message: "No vendor found with this email" }), { status: 404 });
+      }
+      return new Response(JSON.stringify(data.Items[0]), { status: 200 });
+    }
 
     const data = await ddbDocClient.send(new ScanCommand(params));
     return new Response(JSON.stringify(data.Items), { status: 200 });
