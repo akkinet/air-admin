@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { FaGoogle } from "react-icons/fa6"
 
 const useResponsiveBackground = () => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -123,6 +124,13 @@ const page = () => {
               <span className="absolute right-0 w-8 h-32 -mt-12 transition-all duration-1000 transform translate-x-12 bg-white opacity-10 rotate-12 group-hover:-translate-x-40 ease"></span>
               <span className="relative">Log In</span>
             </button>
+            <button
+            className="bg-white hover:bg-gray-100 text-gray-800 font-bold p-3 rounded-full border border-gray-400 shadow flex items-center"
+            type="button"
+            onClick={() => signIn("google")}
+          >
+            <FaGoogle size={20} color="#DB4437" />
+          </button>
             <Link
               href={"/aircraftVendors"}
               className={`block mt-2 md:mt-4 text-center ${
