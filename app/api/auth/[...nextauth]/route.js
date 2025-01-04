@@ -1,9 +1,14 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 // Add more providers if needed
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: String(process.env.GOOGLE_CLIENT_ID),
+      clientSecret: String(process.env.GOOGLE_CLIENT_SECRET),
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -42,6 +47,9 @@ export const authOptions = {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      return baseUrl;
+    },
     async session({ session, token, user }) {
       session.user.role = token.role;
       session.user.actions = token.actions;
