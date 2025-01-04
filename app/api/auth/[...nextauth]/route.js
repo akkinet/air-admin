@@ -51,16 +51,38 @@ export const authOptions = {
       return baseUrl;
     },
     async session({ session, token, user }) {
+      if(token.provider)
+        session.provider = token.provider;
       session.user.role = token.role;
-      session.user.actions = token.actions;
+      if(token.role == "vendor")
+        session.user.isVendorRegistered = token.isVendorRegistered;
+
+      // if (user) {
+      // session.user.actions = token.actions;
 
       return session;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-        token.actions = user.actions;
+    async jwt({ token, user, account }) {
+      
+      if (account) {
+        if(account.provider && account.provider == "google"){
+          const response = await fetch(`${process.env.API_URL}/vendor?email=${user.email}`)
+          if (response.ok) {
+            token.isVendorRegistered = true;
+          } else {
+            token.isVendorRegistered = false;
+          }
+          token.role = "vendor";
+        }else
+          token.role = "admin";
+
+        token.provider = account.provider;
       }
+
+      // if (user) {
+      //   token.role = user.role;
+      //   token.actions = user.actions;
+      // }
 
       return token;
     },
