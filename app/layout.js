@@ -1,5 +1,6 @@
 import AuthProvider from "./components/AuthProvider";
 import Layout from "./components/Layout";
+import { FormProvider } from "./context/FormContext";
 import "./globals.css";
 
 export const metadata = {
@@ -11,7 +12,9 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          <Layout>{children}</Layout>
+          <FormProvider>
+            <Layout>{children}</Layout>
+          </FormProvider>
         </AuthProvider>
       </body>
     </html>

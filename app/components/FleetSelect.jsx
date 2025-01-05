@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import airportsData from '../../app/aircraft_category.json';
 
-const CategoryModelSelect = ({ selectedCategory, setSelectedCategory, selectedModel, setSelectedModel }) => {
+const ModelSelect = ({ selectedCategory, setSelectedCategory, selectedModel, setSelectedModel }) => {
   const [categories, setCategories] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
 
@@ -63,4 +63,4 @@ const CategoryModelSelect = ({ selectedCategory, setSelectedCategory, selectedMo
   );
 };
 
-export default CategoryModelSelect;
+export default ModelSelect;

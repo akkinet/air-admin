@@ -1,12 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import AirportsSelect from "../../components/AirportSelect";
-import FleetSelect from "../../components/FleetSelect";
+import ModelSelect from "../../components/FleetSelect";
 import Link from "next/link";
+import { useFormContext } from "../../context/FormContext";
 
 const FleetDetailsForm = () => {
-  const [formData, setFormData] = useState({
+  const { formData, updateFormData } = useFormContext();
+  const fleetDetails = formData.fleetDetails || {
     registrationNo: "",
     registrationDate: "",
     maxSpeed: "",
@@ -21,26 +23,61 @@ const FleetDetailsForm = () => {
     documents: null,
     takeoffRunway: "",
     landingRunway: "",
-  });
+    selectedModel: "",  // Ensure this key exists by default
+  };
+  const [uploadedFileName, setUploadedFileName] = useState(null);
 
+  useEffect(() => {
+    const savedData = sessionStorage.getItem("formData");
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      updateFormData("fleetDetails", parsedData.fleetDetails);
+    }
+  }, []);
+
+
+
+  // State for local selections that may not require direct sync initially
   const [selectedCountry, setSelectedCountry] = useState("");
-  const [permittedAirports, setPermittedAirports] = useState([]);
-  const [restrictedAirports, setRestrictedAirports] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedModel, setSelectedModel] = useState("None");
 
   const handleChange = (e) => {
     const { name, value, type, files, options } = e.target;
+    let updatedValue = value;
 
     if (type === "file") {
-      setFormData({ ...formData, [name]: files[0] });
+      const file = files[0];
+      updatedValue = file;
+
+      if (file) {
+        setUploadedFileName(file.name);  // Store file name in state
+      }
     } else if (e.target.multiple) {
-      const values = Array.from(options)
+      updatedValue = Array.from(options)
         .filter((option) => option.selected)
         .map((option) => option.value);
-      setFormData({ ...formData, [name]: values });
-    } else {
-      setFormData({ ...formData, [name]: value });
+    }
+
+    updateFormData("fleetDetails", {
+      ...fleetDetails,
+      [name]: updatedValue,
+    });
+  };
+
+
+  // Handle airport changes for permitted and restricted selections
+  const handleAirportChange = (type, airports) => {
+    if (type === "permitted") {
+      updateFormData("fleetDetails", {
+        ...fleetDetails,
+        permittedAirports: airports,
+      });
+    } else if (type === "restricted") {
+      updateFormData("fleetDetails", {
+        ...fleetDetails,
+        restrictedAirports: airports,
+      });
     }
   };
 
@@ -55,32 +92,40 @@ const FleetDetailsForm = () => {
           <legend className="text-xl font-semibold px-4">
             Category & Model Selection
           </legend>
-          <FleetSelect
-            selectedModel={selectedModel}
-            setSelectedModel={setSelectedModel}
+          <ModelSelect
+            selectedModel={fleetDetails.selectedModel || selectedModel}
+            setSelectedModel={(value) =>
+              updateFormData("fleetDetails", {
+                ...fleetDetails,
+                selectedModel: value,
+              })
+            }
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
           />
         </fieldset>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {renderInput("Fleet Registration No", "registrationNo")}
-          {renderInput("Fleet Registration Date", "registrationDate", "date")}
-          {renderInput("Fleet Max Speed", "maxSpeed", "text", "Enter the Max Speed")}
-          {renderInput("Pricing (Per / Hr)", "pricing", "text")}
+          {renderInput("Fleet Registration No", "registrationNo", fleetDetails, handleChange)}
+          {renderInput("Fleet Registration Date", "registrationDate", fleetDetails, handleChange, "date")}
+          {renderInput("Fleet Max Speed", "maxSpeed", fleetDetails, handleChange, "text", "Enter the Max Speed")}
+          {renderInput("Pricing (Per / Hr)", "pricing", fleetDetails, handleChange)}
           {renderSelect(
             "NonStop Flying Range",
             "flyingRange",
+            fleetDetails,
+            handleChange,
             ["upto 200 Knots", "200 - 400 Knots", "400 - 600 Knots"]
           )}
-          {renderInput("Fleet MFG Date", "mfgDate", "date")}
-          {renderInput("Insurance Expiry Date", "insuranceExpiry", "date")}
-          {renderInput("Refurbished Date", "refurbishedDate", "date")}
-          {renderInput("Last Maintenance Date", "lastMaintenance", "date")}
-          {renderInput("Takeoff Runway (in Feet)", "takeoffRunway")}
-          {renderInput("Landing Runway (in Feet)", "landingRunway")}
+          {renderInput("Fleet MFG Date", "mfgDate", fleetDetails, handleChange, "date")}
+          {renderInput("Insurance Expiry Date", "insuranceExpiry", fleetDetails, handleChange, "date")}
+          {renderInput("Refurbished Date", "refurbishedDate", fleetDetails, handleChange, "date")}
+          {renderInput("Last Maintenance Date", "lastMaintenance", fleetDetails, handleChange, "date")}
+          {renderInput("Takeoff Runway (in Feet)", "takeoffRunway", fleetDetails, handleChange)}
+          {renderInput("Landing Runway (in Feet)", "landingRunway", fleetDetails, handleChange)}
         </div>
 
+        {/* Airport Permissions & Restrictions */}
         <fieldset className="border border-gray-200 rounded-2xl p-6 shadow-md bg-gradient-to-br from-gray-50 to-gray-100">
           <legend className="text-xl font-semibold px-4">
             Airport Permissions & Restrictions
@@ -88,20 +133,21 @@ const FleetDetailsForm = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <AirportsSelect
               type="permitted"
-              selectedAirports={permittedAirports}
-              setSelectedAirports={setPermittedAirports}
+              selectedAirports={fleetDetails.permittedAirports || []}
+              setSelectedAirports={(airports) => handleAirportChange("permitted", airports)}
               selectedCountry={selectedCountry}
               setSelectedCountry={setSelectedCountry}
             />
             <AirportsSelect
               type="restricted"
-              selectedAirports={restrictedAirports}
-              setSelectedAirports={setRestrictedAirports}
+              selectedAirports={fleetDetails.restrictedAirports || []}
+              setSelectedAirports={(airports) => handleAirportChange("restricted", airports)}
               selectedCountry={selectedCountry}
             />
           </div>
         </fieldset>
 
+        {/* Document Upload */}
         <div className="col-span-2 text-center">
           <label className="block text-lg font-medium">
             Upload Documents (License / Registration)
@@ -121,6 +167,12 @@ const FleetDetailsForm = () => {
             >
               Upload File
             </label>
+            {uploadedFileName && (
+              <p className="text-green-600 mt-4">
+                File uploaded: <span className="font-semibold">{uploadedFileName}</span>
+              </p>
+            )}
+
           </div>
         </div>
       </form>
@@ -128,36 +180,60 @@ const FleetDetailsForm = () => {
       <div className="flex justify-between mt-16">
         <Link
           href="/fleetRegistration/imageGallery"
+          onClick={() => {
+            updateFormData("fleetDetails", fleetDetails);
+            sessionStorage.setItem("formData", JSON.stringify({ fleetDetails }));
+          }}
+
           className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold shadow-lg hover:scale-110 transition-transform"
         >
           Next
         </Link>
+        {/* <button
+          type="button"
+          onClick={() => {
+            updateFormData("fleetDetails", fleetDetails);
+            sessionStorage.setItem("formData", JSON.stringify({ fleetDetails }));
+          }}
+          className="px-8 py-3 rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-all"
+        >
+          Save Fleet Details
+        </button> */}
+
+
       </div>
     </div>
   );
 };
 
-const renderInput = (label, name, type = "text", placeholder = "") => (
+// Reusable Inputs with Context Integration
+const renderInput = (label, name, formData, handleChange, type = "text", placeholder = "") => (
   <div>
     <label className="block text-lg font-medium mb-2">{label}</label>
     <input
       type={type}
       name={name}
+      value={formData[name] || ""}
       placeholder={placeholder}
+      onChange={handleChange}
       className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
     />
   </div>
 );
 
-const renderSelect = (label, name, options) => (
+const renderSelect = (label, name, formData, handleChange, options) => (
   <div>
     <label className="block text-lg font-medium mb-2">{label}</label>
     <select
       name={name}
+      value={formData[name] || ""}
+      onChange={handleChange}
       className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
     >
       {options.map((option, idx) => (
-        <option key={idx}>{option}</option>
+        <option key={idx} value={option}>
+          {option}
+        </option>
       ))}
     </select>
   </div>

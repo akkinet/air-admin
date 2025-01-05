@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaVideo, FaImage } from "react-icons/fa";
 import Link from "next/link";
 
@@ -10,6 +10,17 @@ const ImageGallery = () => {
     cockpit: {},
     video: null,
   });
+
+  // Hydrate images from session storage on component mount
+  useEffect(() => {
+    const savedData = sessionStorage.getItem("formData");
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      if (parsedData.aircraftGallery) {
+        setImages(parsedData.aircraftGallery);
+      }
+    }
+  }, []);
 
   const handleUpload = (e, section, view) => {
     const file = e.target.files[0];
@@ -22,6 +33,18 @@ const ImageGallery = () => {
         },
       }));
     }
+  };
+
+  const handleNext = () => {
+    const savedData = sessionStorage.getItem("formData");
+    const formData = savedData ? JSON.parse(savedData) : {};
+
+    const updatedFormData = {
+      ...formData,
+      aircraftGallery: images,
+    };
+
+    sessionStorage.setItem("formData", JSON.stringify(updatedFormData));
   };
 
   const renderUploadSection = (sectionTitle, sectionKey) => (
@@ -126,6 +149,7 @@ const ImageGallery = () => {
         <Link
           href={"/fleetRegistration/travelModes"}
           className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold shadow-lg hover:scale-110 transition-transform"
+          onClick={handleNext}
         >
           Next
         </Link>

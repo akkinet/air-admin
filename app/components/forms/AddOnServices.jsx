@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 const amenitiesData = [
@@ -88,7 +88,7 @@ const AmenityCard = ({ item, selectedValues, onChange }) => (
     <h3 className="text-lg font-semibold mb-4">{item}</h3>
     <RadioGroup
       name={item}
-      selectedValue={selectedValues[item] || "not_available"}
+      selectedValue={selectedValues[item] || "free"}  // Default to "free"
       onChange={onChange}
     />
   </div>
@@ -98,8 +98,34 @@ const AmenityCard = ({ item, selectedValues, onChange }) => (
 const AdditionalAmenities = () => {
   const [selectedValues, setSelectedValues] = useState({});
 
+  // Load data from session storage on mount and initialize defaults
+  useEffect(() => {
+    const formData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    let amenities = formData.additionalAmenities || {};
+
+    // Initialize all options as "free" if not already set
+    amenitiesData.forEach((section) => {
+      section.items.forEach((item) => {
+        if (!amenities[item]) {
+          amenities[item] = "free";  // Set to "free" by default
+        }
+      });
+    });
+
+    setSelectedValues(amenities);
+  }, []);
+
   const handleChange = (name, value) => {
-    setSelectedValues({ ...selectedValues, [name]: value });
+    const updatedValues = { ...selectedValues, [name]: value };
+    setSelectedValues(updatedValues);
+  };
+
+  const handleNext = () => {
+    const formData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    formData.additionalAmenities = selectedValues;
+    sessionStorage.setItem("formData", JSON.stringify(formData));
+
+
   };
 
   return (
@@ -124,7 +150,7 @@ const AdditionalAmenities = () => {
         </div>
       ))}
 
-<div className="flex justify-between mt-16">
+      <div className="flex justify-between mt-16">
         <Link
           href={"/fleetRegistration/travelModes"}
           className="px-8 py-3 rounded-lg bg-gradient-to-r from-red-400 to-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
@@ -134,6 +160,7 @@ const AdditionalAmenities = () => {
         <Link
           href={"/fleetRegistration/preview"}
           className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold shadow-lg hover:scale-110 transition-transform"
+          onClick={handleNext}
         >
           Next
         </Link>

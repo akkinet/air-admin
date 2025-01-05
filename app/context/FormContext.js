@@ -1,3 +1,4 @@
+"use client"
 import { createContext, useContext, useState } from "react";
 
 const FormContext = createContext();
@@ -6,7 +7,7 @@ export const FormProvider = ({ children }) => {
   const [formData, setFormData] = useState({
     fleetDetails: {},
     aircraftGallery: {},
-    travelModes: [],
+    travelModes: {},
     additionalAmenities: {},
   });
 

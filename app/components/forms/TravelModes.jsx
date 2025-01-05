@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 const TravelModes = () => {
   const [selectedModes, setSelectedModes] = useState([]);
+  const [modeDetails, setModeDetails] = useState({});
 
   const modes = [
     { id: "sitting", name: "Sitting Mode" },
@@ -13,63 +14,100 @@ const TravelModes = () => {
     { id: "cargo", name: "Cargo Mode" },
   ];
 
+  useEffect(() => {
+    const savedData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    const existingModes = savedData.travelModes || {};
+
+    // Initialize mode details from storage or as empty
+    setModeDetails({
+      ...Object.fromEntries(modes.map((mode) => [mode.id, existingModes[mode.id] || {}])),
+    });
+
+    // Track selected modes
+    setSelectedModes(Object.keys(existingModes).filter((key) => Object.keys(existingModes[key]).length > 0));
+  }, []);
+
   const handleCheckboxChange = (modeId) => {
+    let updatedModes;
+  
     if (selectedModes.includes(modeId)) {
-      setSelectedModes(selectedModes.filter((id) => id !== modeId));
+      updatedModes = selectedModes.filter((id) => id !== modeId);
+      setModeDetails((prev) => ({ ...prev, [modeId]: {} }));  // Reset to empty object if unchecked
     } else {
-      setSelectedModes([...selectedModes, modeId]);
+      updatedModes = [...selectedModes, modeId];
+      setModeDetails((prev) => ({ ...prev, [modeId]: prev[modeId] || {} }));
     }
+  
+    setSelectedModes(updatedModes);
+  
+    // Directly update travelModes in session storage
+    const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    existingFormData.travelModes = {
+      ...existingFormData.travelModes,
+      [modeId]: modeDetails[modeId] || {},
+    };
+    
+    sessionStorage.setItem("formData", JSON.stringify(existingFormData));
+  };
+  
+
+  const handleInputChange = (modeId, field, value) => {
+    const updatedDetails = {
+      ...modeDetails,
+      [modeId]: {
+        ...modeDetails[modeId],
+        [field.includes("(ft)") ? "Space" : field]: {
+          ...(modeDetails[modeId]?.Space || {}),
+          [field.replace(" (ft)", "")]: value,
+        },
+      },
+    };
+    setModeDetails(updatedDetails);
+  
+    // Update existing travelModes directly in session storage
+    const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    existingFormData.travelModes[modeId] = updatedDetails[modeId];
+  
+    sessionStorage.setItem("formData", JSON.stringify(existingFormData));
+  };
+  
+  
+
+  const renderModeDetails = (modeId) => {
+    const modeConfig = {
+      sitting: ["Seats", "Bags (Kg)", "Restroom"],
+      night: ["Common Beds", "Private Rooms", "Recliners"],
+      press: ["Podium", "Seats"],
+      medical: ["Patient Beds", "Guest Seats"],
+      cargo: ["Weight in (TONS)", "Length (ft)", "Height (ft)", "Width (ft)"],  
+    };
+    
+
+    return (
+      <ModeSection title={modes.find((m) => m.id === modeId).name}>
+        {modeConfig[modeId]?.map((label) => (
+          <ModeInput
+            key={label}
+            label={label}
+            modeId={modeId}
+            handleInputChange={handleInputChange}
+          />
+        ))}
+      </ModeSection>
+    );
   };
 
-  const renderModeDetails = (mode) => {
-    switch (mode) {
-      case "sitting":
-        return (
-          <ModeSection title="Sitting Mode">
-            <ModeInput label="Seats" />
-            <ModeInput label="Bags (Kg)" />
-            <ModeInput label="Restroom" />
-            <FileUpload label="Fleet Layout Image" />
-          </ModeSection>
-        );
-      case "night":
-        return (
-          <ModeSection title="Night Mode">
-            <ModeInput label="Common Beds" />
-            <ModeInput label="Private Rooms" />
-            <ModeInput label="Recliners" />
-            <ModeInput label="Private Bed Rooms" />
-            <FileUpload label="Fleet Layout Image" />
-          </ModeSection>
-        );
-      case "press":
-        return (
-          <ModeSection title="Press Mode">
-            <ModeInput label="Podium" />
-            <ModeInput label="Seats" />
-            <FileUpload label="Fleet Layout Image" />
-          </ModeSection>
-        );
-      case "medical":
-        return (
-          <ModeSection title="Medical Mode">
-            <ModeInput label="Patient Beds" />
-            <ModeInput label="Guest Seats" />
-            <ModeInput label="Medical Crew Seats" />
-            <FileUpload label="Fleet Layout Image" />
-          </ModeSection>
-        );
-      case "cargo":
-        return (
-          <ModeSection title="Cargo Mode">
-            <ModeInput label="Weight in (TONS)" />
-            <ModeInput label="Space (L X H X W) in Feets" />
-            <FileUpload label="Fleet Layout Image" />
-          </ModeSection>
-        );
-      default:
-        return null;
-    }
+  const handleNextClick = () => {
+    const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
+    const finalFormData = {
+      ...existingFormData,
+      travelModes: {
+        ...Object.fromEntries(modes.map((mode) => [mode.id, modeDetails[mode.id] || {}])),
+      },
+    };
+
+    // Store final data and console log it
+    sessionStorage.setItem("formData", JSON.stringify(finalFormData));
   };
 
   return (
@@ -103,25 +141,24 @@ const TravelModes = () => {
 
       <div className="space-y-12">
         {selectedModes.map((mode) => (
-          <div key={mode}>
-            {renderModeDetails(mode)}
-          </div>
+          <div key={mode}>{renderModeDetails(mode)}</div>
         ))}
       </div>
 
-
       <div className="flex justify-between mt-16">
-        <Link
-          href="/fleetRegistration/imageGallery"
-          className="px-8 py-3 rounded-lg bg-gradient-to-r from-red-400 to-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
-        >
-          Back
-        </Link>
-        <Link
-          href="/fleetRegistration/addonServices"
-          className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
+        <Link href="/fleetRegistration/imageGallery">
+          <button className="px-8 py-3 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
+            Back
+          </button>
+        </Link >
+        <Link href="/fleetRegistration/addonServices">
+        
+        <button
+          onClick={handleNextClick}
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-lg transition duration-200"
         >
           Next
+        </button>
         </Link>
       </div>
     </div>
@@ -129,34 +166,23 @@ const TravelModes = () => {
 };
 
 const ModeSection = ({ title, children }) => (
-  <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-white to-gray-50 p-8">
-    <h2 className="text-3xl font-bold mb-8 text-gray-900">{title}</h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">{children}</div>
+  <div className="border border-gray-200 rounded-2xl p-8 shadow-lg">
+    <h2 className="text-3xl font-bold mb-8">{title}</h2>
+    <div className="flex flex-wrap gap-6">
+      {children}
+    </div>
   </div>
 );
 
-const ModeInput = ({ label }) => (
+
+const ModeInput = ({ label, modeId, handleInputChange }) => (
   <div>
-    <label className="block text-lg font-medium text-gray-700 mb-2">
-      {label}
-    </label>
+    <label className="block text-lg font-medium mb-2">{label}</label>
     <input
       type="number"
-      placeholder="Number (Integer)"
-      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+      className="w-full p-4 border rounded-lg"
+      onChange={(e) => handleInputChange(modeId, label, e.target.value)}
     />
-  </div>
-);
-
-const FileUpload = ({ label }) => (
-  <div className="col-span-1">
-    <label className="block text-lg font-medium text-gray-700 mb-4">
-      {label}
-    </label>
-    <div className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-indigo-500 hover:bg-indigo-50 transition-all">
-      <input type="file" className="hidden" />
-      <p className="text-sm text-gray-500">Upload or drag files here.</p>
-    </div>
   </div>
 );
 
