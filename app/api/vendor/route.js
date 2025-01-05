@@ -82,6 +82,7 @@ export async function POST(req) {
         zipCode,
         phone,
         socialLinks,
+        verified: false,
         businessDescription,
         branches: branches || [], // Store branches or empty array if none
         createdAt: new Date().toISOString(),
