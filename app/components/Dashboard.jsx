@@ -1,10 +1,7 @@
 "use client";
-
-// import { useSession } from "next-auth/react";
-
 export default function Dashboard({session}) {
-  // const { data: session } = useSession();
-  // console.log("session", session)
+
+  console.log("session", session)
 
   return (
     <div className="h-full flex flex-col items-center justify-center bg-gray-100 ">
