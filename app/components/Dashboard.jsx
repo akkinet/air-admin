@@ -17,28 +17,6 @@ export default function Dashboard() {
             ? `Hello, ${session.user.name}!`
             : "Sign in to personalize your experience."}
         </p>
-
-        <div className="mt-8">
-          {session ? (
-            <button
-              onClick={() => {
-                alert("Access your tools and data!");
-              }}
-              className="bg-customPink text-white px-6 py-2 rounded shadow hover:bg-customBlue transition duration-300"
-            >
-              Go to Tools
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                alert("Redirecting to login...");
-              }}
-              className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-800 transition duration-300"
-            >
-              Sign In
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );
