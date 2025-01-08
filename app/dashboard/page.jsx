@@ -1,19 +1,23 @@
-// import Dashboard from "../components/Dashboard";
+import VendorWelcomePage from "../components/VendorWelcomePage";
+import VendorThankYouPage from "../components/VendorThankYouPage";
 import { getServerSession } from "next-auth/next";
 import authOptions from "@/config/authOptions";
+import { redirect } from "next/navigation";
 
-export default async function DashboardPage() {
+export default async function WelcomePage() {
   const session = await getServerSession(authOptions);
-  return (
-    <div className="h-full flex flex-col items-center justify-center bg-gray-100 ">
-      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-2xl text-center">
-        <h1 className="text-4xl font-bold text-gray-900">
-          Welcome to Your Dashboard
-        </h1>
-        <p className="mt-4 text-gray-600 text-lg">
-          Hello, {session.user.name}!
-        </p>
-      </div>
-    </div>
-  );
+  const isVendorRegistered = session?.user?.isVendorRegistered;
+  const isVendorVerified = session?.user?.isVerified;
+
+  console.log("session", session);
+
+  if (isVendorRegistered && isVendorVerified) {
+    redirect("/formDetails");  // Server-side redirect if both conditions are true
+  }
+
+  if (isVendorRegistered && !isVendorVerified) {
+    return <VendorThankYouPage />;  // Show thank you page if registered but not verified
+  }
+
+  return <VendorWelcomePage />;  // Show welcome page if not registered
 }

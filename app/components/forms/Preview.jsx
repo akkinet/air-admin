@@ -1,10 +1,14 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useState , useEffect } from "react";
 import { useFormContext } from "../../context/FormContext";
+import VendorThankYouPage from "../VendorThankyouPage";
 import Link from "next/link";
 
 const PreviewPage = () => {
   const { formData, updateFormData } = useFormContext();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  
+
 
   useEffect(() => {
     const savedData = sessionStorage.getItem("formData");
@@ -22,9 +26,14 @@ const PreviewPage = () => {
     sessionStorage.removeItem("formData");  // Clear form data from session storage
     console.log("Form Submitted Data:", formData);
     alert("Form submitted successfully!");
-    window.location.href = "/fleetRegistration";
+    // window.location.href = "/fleetRegistration";
+    setIsSubmitted(true);  // Show Thank You Page
 
   };
+
+  if (isSubmitted) {
+    return <VendorThankYouPage />;
+  }
 
   return (
     <div className="container mx-auto py-12 px-6">

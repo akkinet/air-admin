@@ -51,8 +51,10 @@ export default {
       if(token.provider)
         session.provider = token.provider;
       session.user.role = token.role;
-      if(token.role == "vendor")
+      if(token.role == "vendor"){
         session.user.isVendorRegistered = token.isVendorRegistered;
+        session.user.isVerified = token.isVerified;
+      }
 
       return session;
     },
@@ -62,9 +64,12 @@ export default {
         if(account.provider && account.provider == "google"){
           const response = await fetch(`${process.env.API_URL}/vendor?email=${user.email}`)
           if (response.ok) {
+            const vendor  = await response.json();
             token.isVendorRegistered = true;
+            token.isVerified = vendor.verified;
           } else {
             token.isVendorRegistered = false;
+            token.isVerified = false;
           }
           token.role = "vendor";
         }else

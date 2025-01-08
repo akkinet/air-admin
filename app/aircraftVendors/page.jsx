@@ -268,6 +268,7 @@ const handleSubmit = (e) => {
       })
       .then((data) => {
         alert("Form submitted successfully!");
+        window.location.href = "/dashboard";
       })
       .catch((error) => {
         alert("Failed to submit form. Please try again.");
@@ -626,12 +627,10 @@ const handleSubmit = (e) => {
                       name={`photo_${index}`}
                       className="border border-gray-300 rounded px-4  py-1 w-full"
                       onChange={(e) => handleFileChange(index, e)}
-
                     />
                     <FaUpload className="text-gray-500" />
                   </div>
                 </div>
-
                 <div className="col-span-2">
                   <label className="block mb-2">Address Line 1</label>
                   <input
@@ -652,9 +651,6 @@ const handleSubmit = (e) => {
                     placeholder="Enter your address"
                   />
                 </div>
-
-
-
               </div>
               <div className="grid grid-cols-3 gap-4 mt-2">
                 <div>
