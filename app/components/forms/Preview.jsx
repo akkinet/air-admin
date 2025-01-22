@@ -1,5 +1,5 @@
 "use client";
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useFormContext } from "../../context/FormContext";
 import VendorThankYouPage from "../VendorThankyouPage";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import Link from "next/link";
 const PreviewPage = () => {
   const { formData, updateFormData } = useFormContext();
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+
 
 
   useEffect(() => {
@@ -150,9 +150,18 @@ const PreviewPage = () => {
         <div className="space-y-4">
           {formData.additionalAmenities && Object.keys(formData.additionalAmenities).length > 0 ? (
             Object.entries(formData.additionalAmenities).map(([key, value]) => (
-              <div key={key} className="flex justify-between border-b pb-2">
-                <span className="capitalize">{key.replace(/_/g, " ")}</span>
-                <span className="font-semibold">{value}</span>
+              <div key={key} className="border-b pb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="capitalize font-medium">{key.replace(/_/g, " ")}</span>
+                  <span className="font-semibold">{value.value}</span>
+                </div>
+                {/* Check and display name and phone if available */}
+                {(value.name || value.phone) && (
+                  <div className="text-sm text-gray-600 space-y-1">
+                    {value.name && <p><span className="font-semibold">Name:</span> {value.name}</p>}
+                    {value.phone && <p><span className="font-semibold">Phone:</span> {value.phone}</p>}
+                  </div>
+                )}
               </div>
             ))
           ) : (
@@ -160,6 +169,7 @@ const PreviewPage = () => {
           )}
         </div>
       </div>
+
       {/* Button Section */}
       <div className="flex justify-between mt-16">
         <Link

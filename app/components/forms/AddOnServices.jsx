@@ -83,16 +83,38 @@ const RadioGroup = ({ name, selectedValue, onChange }) => {
 };
 
 // Amenity Card Component
-const AmenityCard = ({ item, selectedValues, onChange }) => (
-  <div className="p-6 border border-gray-200 rounded-xl shadow-md bg-gradient-to-br from-gray-50 to-white hover:shadow-lg transition-all">
-    <h3 className="text-lg font-semibold mb-4">{item}</h3>
-    <RadioGroup
-      name={item}
-      selectedValue={selectedValues[item] || "free"}  // Default to "free"
-      onChange={onChange}
-    />
-  </div>
-);
+const AmenityCard = ({ item, selectedValues, onChange, onDetailsChange }) => {
+  const selectedValue = selectedValues[item]?.value || "not_available";
+
+  return (
+    <div className="p-6 border border-gray-200 rounded-xl shadow-md bg-gradient-to-br from-gray-50 to-white hover:shadow-lg transition-all">
+      <h3 className="text-lg font-semibold mb-4">{item}</h3>
+      <RadioGroup
+        name={item}
+        selectedValue={selectedValue} // Pass only the value
+        onChange={(name, value) => onChange(name, value)}
+      />
+      {(selectedValue === "chargeable" || selectedValue === "free") && (
+        <div className="mt-4 space-y-4">
+          <input
+            type="text"
+            placeholder="Name (optional)"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+            value={selectedValues[item]?.name || ""}
+            onChange={(e) => onDetailsChange(item, "name", e.target.value)}
+          />
+          <input
+            type="tel"
+            placeholder="Phone Number (optional)"
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+            value={selectedValues[item]?.phone || ""}
+            onChange={(e) => onDetailsChange(item, "phone", e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Main Component
 const AdditionalAmenities = () => {
@@ -102,31 +124,47 @@ const AdditionalAmenities = () => {
   useEffect(() => {
     const formData = JSON.parse(sessionStorage.getItem("formData")) || {};
     let amenities = formData.additionalAmenities || {};
-
-    // Initialize all options as "free" if not already set
+  
     amenitiesData.forEach((section) => {
       section.items.forEach((item) => {
         if (!amenities[item]) {
-          amenities[item] = "free";  // Set to "free" by default
+          amenities[item] = { value: "not_available", name: "", phone: "" }; // Correct structure
         }
       });
     });
-
+  
     setSelectedValues(amenities);
   }, []);
+  
 
   const handleChange = (name, value) => {
-    const updatedValues = { ...selectedValues, [name]: value };
+    const updatedValues = {
+      ...selectedValues,
+      [name]: {
+        ...selectedValues[name],
+        value,
+      },
+    };
     setSelectedValues(updatedValues);
   };
+  const handleDetailsChange = (name, field, value) => {
+    const updatedValues = {
+      ...selectedValues,
+      [name]: {
+        ...selectedValues[name],
+        [field]: value,
+      },
+    };
+    setSelectedValues(updatedValues);
+  };
+
 
   const handleNext = () => {
     const formData = JSON.parse(sessionStorage.getItem("formData")) || {};
     formData.additionalAmenities = selectedValues;
     sessionStorage.setItem("formData", JSON.stringify(formData));
-
-
   };
+
 
   return (
     <div className="container mx-auto py-12 px-6 max-w-6xl">
@@ -144,7 +182,9 @@ const AdditionalAmenities = () => {
                 item={item}
                 selectedValues={selectedValues}
                 onChange={handleChange}
+                onDetailsChange={handleDetailsChange}
               />
+
             ))}
           </div>
         </div>

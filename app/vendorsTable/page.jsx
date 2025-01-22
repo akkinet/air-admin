@@ -16,7 +16,7 @@ const VendorsTable = () => {
 
   const fetchVendorData = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/vendor");
+      const response = await fetch("/api/vendor");
       const data = await response.json();
       setVendorList(data);
       setIsLoading(false);

@@ -11,6 +11,7 @@ import {
   FaMapMarkerAlt,
   FaCouch,
   FaPlaneDeparture,
+  FaSearchLocation
 } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
 import Link from "next/link";
@@ -42,7 +43,8 @@ const Sidebar = () => {
     { path: "/", label: "Dashboard", icon: FaChartLine },
     { path: "/aircrafts", label: "Aircrafts", icon: FaPlane },
     { path: "/users", label: "Users", icon: FaUsers },
-    { path: "/cognitoForm", label: "Aircraft Listing", icon: FaBuilding },
+    // { path: "/cognitoForm", label: "Aircraft Listing", icon: FaBuilding },
+    { path: "/searchQueryList", label: "Search Listing", icon: FaSearchLocation },
     // { path: "/aircraftVendors", label: "Aircraft Vendors", icon: FaStore },
     { path: "/vendorsTable", label: "Vendors List", icon: FaBox },
     { path: "/aircraftModels", label: "Aircraft Models", icon: FaPlane },
