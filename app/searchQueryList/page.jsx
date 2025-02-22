@@ -69,7 +69,7 @@ const QueriesTable = () => {
 
   return (
     <div className="flex-1 p-6 bg-gray-900 text-white min-h-screen">
-      <h2 className="text-3xl font-semibold mb-6">Query List</h2>
+      <h2 className="text-3xl font-semibold mb-6">Search Query List</h2>
 
       {isLoading ? (
         <p className="text-center">Loading query data...</p>
@@ -83,7 +83,7 @@ const QueriesTable = () => {
                 <th className="px-4 py-3 border">From</th>
                 <th className="px-4 py-3 border">To</th>
                 <th className="px-4 py-3 border">Passengers</th>
-                <th className="px-4 py-3 border">Departure Date/Time</th>
+                <th className="px-4 py-3 border">Dept Date/Time</th>
                 <th className="px-4 py-3 border">Actions</th>
               </tr>
             </thead>
