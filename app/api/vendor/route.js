@@ -1,5 +1,5 @@
-import { PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { ddbDocClient } from "@/config/docClient";
+import { NextResponse } from "next/server";
+import db from "@/lib/mongodb"; // Import the MongoDB connection utility
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export async function POST(req) {
@@ -23,28 +23,34 @@ export async function POST(req) {
       businessDescription,
     } = body;
 
-    const counterParams = {
-      TableName: "AIR_COUNTER",
-      Key: {
-        id: "vendor_id",
-      },
-      UpdateExpression: "SET #cnt = if_not_exists(#cnt, :start) + :incr",
-      ExpressionAttributeNames: {
-        "#cnt": "count",
-      },
-      ExpressionAttributeValues: {
-        ":incr": 1,
-        ":start": 0,
-      },
-      ReturnValues: "UPDATED_NEW",
+    const vendorsCollection = db.collection("AIR_VENDORS");
+
+    // Insert the vendor data into MongoDB
+    const vendorData = {
+      firstName,
+      lastName,
+      corporateName,
+      operationCoverage,
+      email,
+      addressLine1,
+      addressLine2,
+      city,
+      additionalPhone,
+      state,
+      zipCode,
+      phone,
+      socialLinks,
+      verified: false,
+      businessDescription,
+      branches: [], // Initialize branches as empty (will be updated after S3 upload)
+      createdAt: new Date().toISOString(),
     };
 
-    const counterResp = await ddbDocClient.send(
-      new UpdateCommand(counterParams)
-    );
-    const vendorId = counterResp.Attributes.count;
-    const s3 = new S3Client();
+    const result = await vendorsCollection.insertOne(vendorData);
+    const vendorId = result.insertedId; // Get the auto-generated _id from MongoDB
 
+    // Upload branch files to S3 (if applicable)
+    const s3 = new S3Client();
     if (branches && branches.length > 0) {
       for (const branch of branches) {
         const file = branch.file;
@@ -53,7 +59,7 @@ export async function POST(req) {
         const lastDot = fileName.lastIndexOf(".");
         const file_name = fileName.slice(0, lastDot);
         const extension = fileName.slice(lastDot + 1);
-        const newFileName = `vendors/${vendorId}/${file_name}_${new Date().getTime()}.${extension}`;
+        const newFileName = `vendors/${vendorId}/${file_name}_${new Date().getTime()}.${extension}`; // Use vendorId in the file path
         const params = {
           Bucket: process.env.AWS_S3_BUCKET,
           Key: newFileName,
@@ -63,42 +69,22 @@ export async function POST(req) {
         await s3.send(new PutObjectCommand(params));
         branch.file = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET}/${newFileName}`;
       }
+
+      // Update the vendor document with the branches (including S3 file URLs)
+      await vendorsCollection.updateOne(
+        { _id: vendorId },
+        { $set: { branches } }
+      );
     }
-    const params = {
-      TableName: "AIR_VENDOR",
-      Item: {
-        ID: vendorId,
-        firstName,
-        lastName,
-        corporateName,
-        operationCoverage,
-        branches,
-        email,
-        addressLine1,
-        addressLine2,
-        city,
-        additionalPhone,
-        state,
-        zipCode,
-        phone,
-        socialLinks,
-        verified: false,
-        businessDescription,
-        branches: branches || [], // Store branches or empty array if none
-        createdAt: new Date().toISOString(),
-      },
-    };
 
-    await ddbDocClient.send(new PutCommand(params));
-
-    return new Response(
-      JSON.stringify({ message: "Vendor data stored successfully" }),
+    return NextResponse.json(
+      { message: "Vendor data stored successfully", vendorId },
       { status: 200 }
     );
   } catch (error) {
-    console.error("DynamoDB Error:", error);
-    return new Response(
-      JSON.stringify({ message: "Failed to store data", error }),
+    console.error("MongoDB Error:", error);
+    return NextResponse.json(
+      { message: "Failed to store data", error: error.message },
       { status: 500 }
     );
   }
@@ -107,30 +93,25 @@ export async function POST(req) {
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");
+
   try {
-    const params = {
-      TableName: "AIR_VENDOR",
-    };
+    // Get the MongoDB client
+    const vendorsCollection = db.collection("AIR_VENDOR");
 
-    if (email) {
-      params.FilterExpression = "email = :email";
-      params.ExpressionAttributeValues = {
-        ":email": email,
-      };
+    const vendors = await vendorsCollection.find({ email }).toArray();
 
-      const data = await ddbDocClient.send(new ScanCommand(params));
-      if(data.Count === 0) {
-        return new Response(JSON.stringify({ message: "No vendor found with this email" }), { status: 404 });
-      }
-      return new Response(JSON.stringify(data.Items[0]), { status: 200 });
+    if (email && vendors.length === 0) {
+      return NextResponse.json(
+        { message: "No vendor found with this email" },
+        { status: 404 }
+      );
     }
 
-    const data = await ddbDocClient.send(new ScanCommand(params));
-    return new Response(JSON.stringify(data.Items), { status: 200 });
+    return NextResponse.json(vendors, { status: 200 });
   } catch (error) {
-    console.error("DynamoDB Error:", error);
-    return new Response(
-      JSON.stringify({ message: "Failed to fetch data", error }),
+    console.error("MongoDB Error:", error);
+    return NextResponse.json(
+      { message: "Failed to fetch data", error: error.message },
       { status: 500 }
     );
   }

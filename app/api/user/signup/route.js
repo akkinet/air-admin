@@ -1,28 +1,32 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { ddbDocClient } from "@/config/docClient";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import db from "@/lib/mongodb"; // Import the MongoDB connection utility
 
 export const POST = async (req) => {
   try {
     const body = await req.json();
 
+    // Hash the password
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(body.password, salt);
     delete body.password;
 
-    const params = {
-      TableName: "AIR_ADMINS",
-      Item: {
-        ...body,
-        password: hashedPassword,
-      },
-    };
+    // Get the MongoDB client
+    const collection = db.collection("AIR_ADMINS"); // Replace with your collection name
 
-    await ddbDocClient.send(new PutCommand(params));
+    // Insert the new user into the collection
+    const result = await collection.insertOne({
+      ...body,
+      password: hashedPassword,
+    });
+
+    // Check if the insertion was successful
+    if (!result.acknowledged) {
+      throw new Error("Failed to insert user into the database");
+    }
 
     return NextResponse.json(
-      { message: "successfully signed up" },
+      { message: "Successfully signed up" },
       { status: 201 }
     );
   } catch (error) {
