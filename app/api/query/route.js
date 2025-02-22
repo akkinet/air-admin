@@ -1,22 +1,19 @@
 import { NextResponse } from "next/server";
-import { ddbDocClient } from "@/config/docClient";
-import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import db from "@/lib/mongodb"; // Import the MongoDB connection utility
 
 export const GET = async (req) => {
-  try{
-    const params = {
-      TableName: "AIR_USER_QUERY",
-    };
+  try {
 
-    const result = await ddbDocClient.send(new ScanCommand(params));
+    const UserQuery = db.collection("UserQuery");
+    const userQueries = await UserQuery.find().toArray();
 
-    if (!result.Items) {
-      return NextResponse.status(404).json({ message: "Record not found" });
+    if (!userQueries.length) {
+      return NextResponse.json({ message: "No records found" }, { status: 404 });
     }
 
-    return NextResponse.json(result.Items);
-  }catch(err){
-    console.error("Error retrieving records:", err);
-    return NextResponse.json({ err }, { status: 500 });
+    return NextResponse.json(userQueries);
+  } catch (error) {
+    console.error("Error retrieving records:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-}
+};
