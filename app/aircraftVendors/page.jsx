@@ -15,9 +15,14 @@ import {
 
 } from "react-icons/fa";
 import SocialLinks from "../components/SocialLinks";
+import { useSession } from "next-auth/react";
+
 
 
 export default function BusinessInformationForm() {
+  const { data: session } = useSession();
+
+
   const [formData, setFormData] = useState({
     corporateName: "",
     email: "",
@@ -123,158 +128,158 @@ export default function BusinessInformationForm() {
     return error;
   };
 
-const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
 
-  const branchRegex = /^(\d+)_(\w+)$/;
-  const match = name.match(branchRegex);
+    const branchRegex = /^(\d+)_(\w+)$/;
+    const match = name.match(branchRegex);
 
-  if (match) {
-    const branchIndex = parseInt(match[1], 10);
-    const field = match[2];
+    if (match) {
+      const branchIndex = parseInt(match[1], 10);
+      const field = match[2];
 
-    const updatedBranches = [...branches];
+      const updatedBranches = [...branches];
 
-    // Ensure branch exists
-    if (!updatedBranches[branchIndex]) {
-      updatedBranches[branchIndex] = { socialLinks: [] };
-    }
-
-    // Ensure socialLinks array is initialized
-    if (!updatedBranches[branchIndex].socialLinks) {
-      updatedBranches[branchIndex].socialLinks = [];
-    }
-
-    // Handle social links dynamically
-    if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(field)) {
-      const existingLinkIndex = updatedBranches[branchIndex].socialLinks.findIndex(
-        (link) => link.type === field
-      );
-
-      if (existingLinkIndex > -1) {
-        updatedBranches[branchIndex].socialLinks[existingLinkIndex].value = value;
-      } else {
-        updatedBranches[branchIndex].socialLinks.push({ type: field, value });
+      // Ensure branch exists
+      if (!updatedBranches[branchIndex]) {
+        updatedBranches[branchIndex] = { socialLinks: [] };
       }
-    } else {
-      // ✅ Update non-social link fields without overwriting
-      updatedBranches[branchIndex][field] = value;
-    }
 
-    setBranches(updatedBranches);
-  } else {
-    // Main form fields
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        operationsType: checked
-          ? [...prev.operationsType, value]
-          : prev.operationsType.filter((item) => item !== value),
-      }));
-    }
-    // Handle main form social links
-    else if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(name)) {
-      setFormData((prev) => {
-        const socialLinks = prev.socialLinks.filter((link) => link.type !== name);
-        if (value) {
-          socialLinks.push({ type: name, value });
+      // Ensure socialLinks array is initialized
+      if (!updatedBranches[branchIndex].socialLinks) {
+        updatedBranches[branchIndex].socialLinks = [];
+      }
+
+      // Handle social links dynamically
+      if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(field)) {
+        const existingLinkIndex = updatedBranches[branchIndex].socialLinks.findIndex(
+          (link) => link.type === field
+        );
+
+        if (existingLinkIndex > -1) {
+          updatedBranches[branchIndex].socialLinks[existingLinkIndex].value = value;
+        } else {
+          updatedBranches[branchIndex].socialLinks.push({ type: field, value });
         }
-        return { ...prev, socialLinks };
-      });
+      } else {
+        // ✅ Update non-social link fields without overwriting
+        updatedBranches[branchIndex][field] = value;
+      }
+
+      setBranches(updatedBranches);
     } else {
-      // Regular main form fields
-      const error = validateField(name, value);
-      setFormData((prev) => ({ ...prev, [name]: value }));
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+      // Main form fields
+      if (type === "checkbox") {
+        setFormData((prev) => ({
+          ...prev,
+          operationsType: checked
+            ? [...prev.operationsType, value]
+            : prev.operationsType.filter((item) => item !== value),
+        }));
+      }
+      // Handle main form social links
+      else if (["facebook", "instagram", "linkedin", "whatsapp", "snapchat", "twitter"].includes(name)) {
+        setFormData((prev) => {
+          const socialLinks = prev.socialLinks.filter((link) => link.type !== name);
+          if (value) {
+            socialLinks.push({ type: name, value });
+          }
+          return { ...prev, socialLinks };
+        });
+      } else {
+        // Regular main form fields
+        const error = validateField(name, value);
+        setFormData((prev) => ({ ...prev, [name]: value }));
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: error }));
+      }
     }
-  }
-};
+  };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
-  const newErrors = {};
-  const missingFields = [];
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newErrors = {};
+    const missingFields = [];
 
-  // Validate main form fields
-  Object.keys(formData).forEach((key) => {
-    const error = validateField(key, formData[key]);
-    if (error) {
-      newErrors[key] = error;
-      missingFields.push(key);
-    }
-  });
-
-  // Validate branches
-  branches.forEach((branch, index) => {
-    Object.keys(branch).forEach((key) => {
-      const fieldName = `${key}_${index}`;
-      const error = validateField(fieldName, branch[key]);
+    // Validate main form fields
+    Object.keys(formData).forEach((key) => {
+      const error = validateField(key, formData[key]);
       if (error) {
-        newErrors[fieldName] = error;
-        missingFields.push(fieldName);
+        newErrors[key] = error;
+        missingFields.push(key);
       }
     });
-  });
 
-  setErrors(newErrors);
-
-  if (Object.keys(newErrors).length > 0) {
-    const fieldNames = missingFields
-      .map((field) => {
-        if (field.includes("_")) {
-          const [fieldKey, index] = field.split("_");
-          return `Branch ${parseInt(index, 10) + 1} - ${fieldKey}`;
+    // Validate branches
+    branches.forEach((branch, index) => {
+      Object.keys(branch).forEach((key) => {
+        const fieldName = `${key}_${index}`;
+        const error = validateField(fieldName, branch[key]);
+        if (error) {
+          newErrors[fieldName] = error;
+          missingFields.push(fieldName);
         }
-        return field;
-      })
-      .join(", ");
-    alert(`Please fill in all required fields: ${fieldNames}`);
-  } else {
-    const dataToSend = {
-      ...formData,
-      branches: branches.map((branch, index) => {
-        const branchFields = {};
-        
-        // Extract dynamic branch fields from formData
-        Object.keys(formData).forEach((key) => {
-          if (key.endsWith(`_${index}`)) {
-            const fieldName = key.split("_")[0];
-            branchFields[fieldName] = formData[key];
-          }
-        });
-
-        return {
-          ...branch,
-          ...branchFields,  // Merge the extracted fields into the branch object
-          socialLinks: branch.socialLinks || [],
-        };
-      }),
-    };
-
-    console.log("Payload to Send:", dataToSend);
-
-    fetch("http://localhost:3000/api/vendor", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dataToSend),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to submit form");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        alert("Form submitted successfully!");
-        window.location.href = "/dashboard";
-      })
-      .catch((error) => {
-        alert("Failed to submit form. Please try again.");
       });
-  }
-};
+    });
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const fieldNames = missingFields
+        .map((field) => {
+          if (field.includes("_")) {
+            const [fieldKey, index] = field.split("_");
+            return `Branch ${parseInt(index, 10) + 1} - ${fieldKey}`;
+          }
+          return field;
+        })
+        .join(", ");
+      alert(`Please fill in all required fields: ${fieldNames}`);
+    } else {
+      const dataToSend = {
+        ...formData,
+        branches: branches.map((branch, index) => {
+          const branchFields = {};
+
+          // Extract dynamic branch fields from formData
+          Object.keys(formData).forEach((key) => {
+            if (key.endsWith(`_${index}`)) {
+              const fieldName = key.split("_")[0];
+              branchFields[fieldName] = formData[key];
+            }
+          });
+
+          return {
+            ...branch,
+            ...branchFields,  // Merge the extracted fields into the branch object
+            socialLinks: branch.socialLinks || [],
+          };
+        }),
+      };
+
+      console.log("Payload to Send:", dataToSend);
+
+      fetch("http://localhost:3000/api/vendor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to submit form");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          alert("Form submitted successfully!");
+          window.location.href = "/dashboard";
+        })
+        .catch((error) => {
+          alert("Failed to submit form. Please try again.");
+        });
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 mt-5 font-medium italic">
@@ -381,10 +386,11 @@ const handleSubmit = (e) => {
               <input
                 type="email"
                 name="email"
-                onChange={handleChange}
-                placeholder="Enter your email address"
-                className="w-full border border-gray-300 rounded px-4  py-1 font-normal italic"
+                value={session?.user?.email || ""}
+                readOnly
+                className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic"
               />
+
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email}</p>
               )}
@@ -685,10 +691,10 @@ const handleSubmit = (e) => {
                 </div>
               </div>
               <SocialLinks
-                  prefix={`${index}_`}  // Dynamic prefix per branch
-                  handleChange={handleChange}
-                  errors={errors}
-                />
+                prefix={`${index}_`}  // Dynamic prefix per branch
+                handleChange={handleChange}
+                errors={errors}
+              />
               <button
                 type="button"
                 onClick={() => handleDeleteBranch(index)}
