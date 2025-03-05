@@ -91,21 +91,10 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email");
-
   try {
-    // Get the MongoDB client
-    const vendorsCollection = db.collection("AIR_VENDOR");
+    const vendorsCollection = db.collection("AIR_VENDORS");
 
-    const vendors = await vendorsCollection.find({ email }).toArray();
-
-    if (email && vendors.length === 0) {
-      return NextResponse.json(
-        { message: "No vendor found with this email" },
-        { status: 404 }
-      );
-    }
+    const vendors = await vendorsCollection.find().toArray();
 
     return NextResponse.json(vendors, { status: 200 });
   } catch (error) {
