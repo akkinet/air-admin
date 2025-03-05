@@ -1,5 +1,5 @@
 import VendorWelcomePage from "../components/VendorWelcomePage";
-import VendorThankYouPage from "../components/VendorThankYouPage";
+import VendorThankYouPage from "../components/ThankyouPage";
 import { getServerSession } from "next-auth/next";
 import authOptions from "@/config/authOptions";
 import { redirect } from "next/navigation";
@@ -18,6 +18,5 @@ export default async function WelcomePage() {
   if (isVendorRegistered && !isVendorVerified) {
     return <VendorThankYouPage />;  // Show thank you page if registered but not verified
   }
-
   return <VendorWelcomePage />;  // Show welcome page if not registered
 }

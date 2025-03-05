@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import airportsData from '../../app/aircraft_category.json';
 
-const ModelSelect = ({ selectedCategory, setSelectedCategory, selectedModel, setSelectedModel }) => {
+const ModelSelect = ({ flightType, setflightType, selectedModel, setSelectedModel }) => {
   const [categories, setCategories] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
 
@@ -10,15 +10,15 @@ const ModelSelect = ({ selectedCategory, setSelectedCategory, selectedModel, set
   }, []);
 
   useEffect(() => {
-    if (selectedCategory && airportsData[selectedCategory]) {
-      setFilteredModels(airportsData[selectedCategory]);
+    if (flightType && airportsData[flightType]) {
+      setFilteredModels(airportsData[flightType]);
     } else {
       setFilteredModels([]);
     }
-  }, [selectedCategory]);
+  }, [flightType]);
 
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
+    setflightType(category);
     setSelectedModel('None');  // Reset model to "None" when category changes or is deselected
   };
 
@@ -32,7 +32,7 @@ const ModelSelect = ({ selectedCategory, setSelectedCategory, selectedModel, set
       <div className="w-1/2">
         <select
           onChange={(e) => handleCategorySelect(e.target.value)}
-          value={selectedCategory || ''}
+          value={flightType || ''}
           className="w-full border border-gray-300 p-2 rounded-md"
         >
           <option value="">Select Category</option>

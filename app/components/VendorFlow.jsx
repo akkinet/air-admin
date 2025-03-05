@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react";
 import VendorWelcomePage from "./VendorWelcomePage";
-import VendorThankYouPage from "./VendorThankyouPage";
+import VendorThankYouPage from "./ThankyouPage";
 
 export default function VendorFlow() {
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);

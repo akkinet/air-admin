@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useFormContext } from "../../context/FormContext";
-import VendorThankYouPage from "../VendorThankyouPage";
+import VendorThankYouPage from "../ThankyouPage";
 import Link from "next/link";
 
 const PreviewPage = () => {

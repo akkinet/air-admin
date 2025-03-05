@@ -5,10 +5,13 @@ import AirportsSelect from "../../components/AirportSelect";
 import ModelSelect from "../../components/FleetSelect";
 import Link from "next/link";
 import { useFormContext } from "../../context/FormContext";
+import { useSession } from "next-auth/react";
 
 const FleetDetailsForm = () => {
   const { formData, updateFormData } = useFormContext();
-  
+  const { data: session } = useSession();
+
+  // Add the new fields (luggage and vendor_email) in the default fleetDetails object.
   const fleetDetails = formData.fleetDetails || {
     registrationNo: "",
     registrationDate: "",
@@ -23,14 +26,16 @@ const FleetDetailsForm = () => {
     documents: null,
     takeoffRunway: "",
     landingRunway: "",
-    seatCapacity: "", // ✅ New Seat Capacity field
-    selectedModel: "",  
-    selectedCategory: "", // ✅ Store selected category
+    seatCapacity: "",
+    selectedModel: "",
+    flightType: "",
     isFleetUnavailable: "no",
     unavailabilityDates: {
       fromDate: "",
       toDate: "",
     },
+    luggage: "",
+    vendor_email: ""
   };
 
   const [uploadedFileName, setUploadedFileName] = useState(null);
@@ -43,7 +48,14 @@ const FleetDetailsForm = () => {
     }
   }, []);
 
-  const [selectedCategory, setSelectedCategory] = useState(fleetDetails.selectedCategory || "");
+  // Fetch vendor_email from session and update formData; this field is non-editable.
+  useEffect(() => {
+    if (session?.user?.email) {
+      updateFormData("fleetDetails", { ...fleetDetails, vendor_email: session.user.email });
+    }
+  }, [session]);
+
+  const [flightType, setflightType] = useState(fleetDetails.flightType || "");
   const [selectedModel, setSelectedModel] = useState(fleetDetails.selectedModel || "");
   const [isFleetUnavailable, setIsFleetUnavailable] = useState(fleetDetails.isFleetUnavailable || "no");
   const [unavailabilityDates, setUnavailabilityDates] = useState(fleetDetails.unavailabilityDates || { fromDate: "", toDate: "" });
@@ -93,39 +105,38 @@ const FleetDetailsForm = () => {
   };
 
   // Reusable function to render input fields
-const renderInput = (label, name, formData, handleChange, type = "text", placeholder = "") => (
-  <div>
-    <label className="block text-lg font-medium mb-2">{label}</label>
-    <input
-      type={type}
-      name={name}
-      value={formData[name] || ""}
-      placeholder={placeholder}
-      onChange={handleChange}
-      className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-    />
-  </div>
-);
+  const renderInput = (label, name, formData, handleChange, type = "text", placeholder = "") => (
+    <div>
+      <label className="block text-lg font-medium mb-2">{label}</label>
+      <input
+        type={type}
+        name={name}
+        value={formData[name] || ""}
+        placeholder={placeholder}
+        onChange={handleChange}
+        className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+      />
+    </div>
+  );
 
-// Reusable function to render select dropdowns
-const renderSelect = (label, name, formData, handleChange, options) => (
-  <div>
-    <label className="block text-lg font-medium mb-2">{label}</label>
-    <select
-      name={name}
-      value={formData[name] || ""}
-      onChange={handleChange}
-      className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-    >
-      {options.map((option, idx) => (
-        <option key={idx} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  </div>
-);
-
+  // Reusable function to render select dropdowns
+  const renderSelect = (label, name, formData, handleChange, options) => (
+    <div>
+      <label className="block text-lg font-medium mb-2">{label}</label>
+      <select
+        name={name}
+        value={formData[name] || ""}
+        onChange={handleChange}
+        className="w-full border border-gray-300 p-4 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+      >
+        {options.map((option, idx) => (
+          <option key={idx} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-8 bg-white shadow-2xl rounded-2xl border border-gray-100">
@@ -143,13 +154,23 @@ const renderSelect = (label, name, formData, handleChange, options) => (
               setSelectedModel(value);
               updateFormData("fleetDetails", { ...fleetDetails, selectedModel: value });
             }}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={(value) => {
-              setSelectedCategory(value);
-              updateFormData("fleetDetails", { ...fleetDetails, selectedCategory: value });
+            flightType={flightType}
+            setflightType={(value) => {
+              setflightType(value);
+              updateFormData("fleetDetails", { ...fleetDetails, flightType: value });
             }}
           />
         </fieldset>
+        <div>
+          <label className="block text-lg font-medium mb-2">Vendor Email</label>
+          <input
+            type="email"
+            name="vendor_email"
+            value={fleetDetails.vendor_email || ""}
+            readOnly
+            className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic"
+          />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {renderInput("Fleet Registration No", "registrationNo", fleetDetails, handleChange)}
@@ -163,8 +184,11 @@ const renderSelect = (label, name, formData, handleChange, options) => (
           {renderInput("Last Maintenance Date", "lastMaintenance", fleetDetails, handleChange, "date")}
           {renderInput("Takeoff Runway (in Feet)", "takeoffRunway", fleetDetails, handleChange)}
           {renderInput("Landing Runway (in Feet)", "landingRunway", fleetDetails, handleChange)}
-          {renderInput("Seat Capacity", "seatCapacity", fleetDetails, handleChange, "number")} {/* ✅ Seat Capacity Field */}
+          {renderInput("Seat Capacity", "seatCapacity", fleetDetails, handleChange, "number")}
+          {renderInput("Luggage (in Kgs)", "luggage", fleetDetails, handleChange, "number")}
         </div>
+        
+
 
         {/* Non-availability of Fleet */}
         <fieldset className="border border-gray-200 rounded-2xl p-6 shadow-md bg-gradient-to-br from-gray-50 to-gray-100">
@@ -189,7 +213,7 @@ const renderSelect = (label, name, formData, handleChange, options) => (
         <div className="flex justify-between mt-16">
           <Link href="/fleetRegistration/imageGallery"
             onClick={() => {
-              const updatedFleetDetails = { ...fleetDetails, selectedCategory, selectedModel, isFleetUnavailable, unavailabilityDates };
+              const updatedFleetDetails = { ...fleetDetails, flightType, selectedModel, isFleetUnavailable, unavailabilityDates };
               updateFormData("fleetDetails", updatedFleetDetails);
               sessionStorage.setItem("formData", JSON.stringify({ fleetDetails: updatedFleetDetails }));
             }}

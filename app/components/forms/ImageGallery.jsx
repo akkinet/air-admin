@@ -8,6 +8,7 @@ const ImageGallery = () => {
     exterior: {},
     interior: {},
     cockpit: {},
+    aircraftLayout: {},
     video: null,
   });
 
@@ -47,13 +48,14 @@ const ImageGallery = () => {
     sessionStorage.setItem("formData", JSON.stringify(updatedFormData));
   };
 
-  const renderUploadSection = (sectionTitle, sectionKey) => (
+  // Updated function accepts an optional views array
+  const renderUploadSection = (sectionTitle, sectionKey, views = ["Front View", "Left View", "Rear View", "Right View"]) => (
     <div className="border border-transparent rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 p-8 transition-all duration-300 hover:shadow-3xl hover:from-indigo-100 hover:to-white">
       <h2 className="text-3xl font-bold mb-8 text-gray-900 tracking-wide">
         {sectionTitle}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {["Front View", "Left View", "Rear View", "Right View"].map((view) => (
+        {views.map((view) => (
           <div
             key={view}
             className="relative group flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl h-60 bg-gradient-to-tr from-gray-50 to-gray-100 hover:border-indigo-500 hover:from-indigo-50 hover:to-indigo-100 hover:scale-105 transition-all duration-300"
@@ -100,6 +102,7 @@ const ImageGallery = () => {
         {renderUploadSection("Exterior View", "exterior")}
         {renderUploadSection("Interior View", "interior")}
         {renderUploadSection("Cockpit View", "cockpit")}
+        {renderUploadSection("Aircraft Layout( Day /Night )", "aircraftLayout", ["Day", "Night"])}
 
         <div className="border border-transparent rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 p-8 hover:shadow-3xl hover:from-indigo-100 hover:to-white transition-all duration-300">
           <h2 className="text-3xl font-bold mb-8 text-gray-900">

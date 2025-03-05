@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaUser,
   FaPhone,
@@ -53,6 +53,11 @@ export default function BusinessInformationForm() {
   const addBranch = () => {
     setBranches([...branches, { branchId: branches.length + 1, file: null, socialLinks: [] }]);
   };
+  useEffect(() => {
+    if (session?.user?.email) {
+      setFormData(prev => ({ ...prev, email: session.user.email }));
+    }
+  }, [session]);
 
   const handleFileChange = (index, e) => {
     const file = e.target.files[0];
@@ -386,10 +391,11 @@ export default function BusinessInformationForm() {
               <input
                 type="email"
                 name="email"
-                value={session?.user?.email || ""}
+                value={formData.email}
                 readOnly
                 className="w-full border border-gray-300 rounded px-4 py-1 font-normal italic"
               />
+
 
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email}</p>
