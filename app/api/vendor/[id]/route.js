@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/mongodb"; // Import the MongoDB connection utility
+import { ObjectId } from "mongodb";
 
 export async function PUT(req, ctx) {
   try {
@@ -9,7 +10,7 @@ export async function PUT(req, ctx) {
 
     // Update the vendor's `verified` status
     const result = await vendorsCollection.updateOne(
-      { _id: id }, // Filter by vendor ID
+      { _id: new ObjectId(id) }, // Filter by vendor ID
       { $set: { verified: true } } // Update the `verified` field
     );
 
