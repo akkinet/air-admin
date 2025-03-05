@@ -5,7 +5,7 @@ export async function PUT(req, ctx) {
   try {
     const id = (await ctx.params).id; // Get the vendor ID from the URL params
 
-    const vendorsCollection = db.collection("AIR_VENDOR");
+    const vendorsCollection = db.collection("AIR_VENDORS");
 
     // Update the vendor's `verified` status
     const result = await vendorsCollection.updateOne(
