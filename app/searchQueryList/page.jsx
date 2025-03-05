@@ -3,10 +3,14 @@ import React, { useState, useEffect } from "react";
 
 const QueriesTable = () => {
   // State
-  const [queryList, setQueryList] = useState([]);       // Will hold an array of query objects
+  const [queryList, setQueryList] = useState([]); // Will hold an array of query objects
   const [isLoading, setIsLoading] = useState(true);
+
   const [viewMoreModalOpen, setViewMoreModalOpen] = useState(false);
   const [selectedQuery, setSelectedQuery] = useState(null); // The entire query object for the modal
+
+  // For search/filter
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchQueries();
@@ -17,11 +21,10 @@ const QueriesTable = () => {
     try {
       const response = await fetch("/api/query");
       const data = await response.json();
+      // Handle array or single object response:
+      const dataArray = Array.isArray(data) ? data : [data];
 
-      // If /api/query returns a single object, uncomment below line to wrap in an array:
-      // const dataArray = Array.isArray(data) ? data : [data];
-
-      setQueryList(Array.isArray(data) ? data : [data]); // handle array or single
+      setQueryList(dataArray);
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching query data:", error);
@@ -29,36 +32,64 @@ const QueriesTable = () => {
     }
   };
 
+  // Helper to extract text within parentheses:
+  // If none found, returns the entire string as fallback.
+  const extractCodeInParentheses = (str) => {
+    if (typeof str !== "string") return str;
+    const match = str.match(/\(([^)]+)\)/);
+    return match ? match[1] : str;
+  };
+
+  // 1. Filter the queries based on searchTerm
+  // 2. Sort them by timestamp descending (so latest is on top)
+  const filteredQueries = queryList
+    .sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+    .filter((query) => {
+      const name = query.userInfo?.name?.toLowerCase() || "";
+      const email = query.userInfo?.email?.toLowerCase() || "";
+      const phone = query.userInfo?.phone?.toLowerCase() || "";
+      const search = searchTerm.toLowerCase();
+
+      return (
+        name.includes(search) ||
+        email.includes(search) ||
+        phone.includes(search)
+      );
+    });
+
   // Build an array of “rows” for the table: each segment becomes its own row.
-  // This way we can show from/to/passengers/date/time on a single row, 
-  // but still link back to the entire query for "View More."
   const rows = [];
-  queryList.forEach((query) => {
-    const { id, segments } = query;
+  filteredQueries.forEach((query) => {
+    const { _id, segments, userInfo } = query;
+    // If no segments, still push a single row
     if (!segments || segments.length === 0) {
-      // If no segments, still push a single row with placeholders
       rows.push({
         query,
-        segmentIndex: -1, // means none
         rowData: {
-          id,
+          _id,
+          name: userInfo?.name || "N/A",
+          email: userInfo?.email || "N/A",
+          phone: userInfo?.phone || "N/A",
           from: "N/A",
           to: "N/A",
-          passengers: "-",
           departureDate: "-",
           departureTime: "-",
         },
       });
     } else {
-      segments.forEach((segment, idx) => {
+      segments.forEach((segment) => {
         rows.push({
           query,
-          segmentIndex: idx,
           rowData: {
-            id,
-            from: segment.from,
-            to: segment.to,
-            passengers: segment.passengers,
+            _id,
+            name: userInfo?.name || "N/A",
+            email: userInfo?.email || "N/A",
+            phone: userInfo?.phone || "N/A",
+            // Extract only the part within parentheses for 'from' & 'to'
+            from: extractCodeInParentheses(segment.from),
+            to: extractCodeInParentheses(segment.to),
             departureDate: segment.departureDate,
             departureTime: segment.departureTime,
           },
@@ -71,6 +102,17 @@ const QueriesTable = () => {
     <div className="flex-1 p-6 bg-gray-900 text-white min-h-screen">
       <h2 className="text-3xl font-semibold mb-6">Search Query List</h2>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by name, email or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="px-4 py-2 w-full md:w-1/2 bg-gray-800 text-white rounded focus:outline-none"
+        />
+      </div>
+
       {isLoading ? (
         <p className="text-center">Loading query data...</p>
       ) : (
@@ -78,11 +120,12 @@ const QueriesTable = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-700 text-white">
-                <th className="px-4 py-3 border">S.No</th>
-                <th className="px-4 py-3 border">ID</th>
+                {/* Remove _id column from the table header if not needed */}
+                <th className="px-4 py-3 border">Name</th>
+                <th className="px-4 py-3 border">Email</th>
+                <th className="px-4 py-3 border">Phone</th>
                 <th className="px-4 py-3 border">From</th>
                 <th className="px-4 py-3 border">To</th>
-                <th className="px-4 py-3 border">Passengers</th>
                 <th className="px-4 py-3 border">Dept Date/Time</th>
                 <th className="px-4 py-3 border">Actions</th>
               </tr>
@@ -91,26 +134,40 @@ const QueriesTable = () => {
               {rows.length > 0 ? (
                 rows.map((item, index) => {
                   const {
-                    id,
+                    _id,
+                    name,
+                    email,
+                    phone,
                     from,
                     to,
-                    passengers,
                     departureDate,
                     departureTime,
                   } = item.rowData;
 
                   return (
                     <tr
-                      key={`${id}-${index}`}
+                      key={`${_id}-${index}`}
                       className="border-t border-gray-700 hover:bg-gray-700"
                     >
-                      <td className="px-4 py-3 border">{index + 1}</td>
-                      <td className="px-4 py-3 border">{id}</td>
-                      <td className="px-4 py-3 border">{from}</td>
-                      <td className="px-4 py-3 border">{to}</td>
-                      <td className="px-4 py-3 border">{passengers}</td>
+                      <td className="px-4 py-3 border whitespace-nowrap">
+                        {name}
+                      </td>
+                      <td className="px-4 py-3 border whitespace-nowrap">
+                        {email}
+                      </td>
+                      <td className="px-4 py-3 border whitespace-nowrap">
+                        {phone}
+                      </td>
+                      {/* Truncate "from" and "to" to a single line */}
+                      <td className="px-4 py-3 border whitespace-nowrap overflow-ellipsis overflow-hidden max-w-[150px]">
+                        {from}
+                      </td>
+                      <td className="px-4 py-3 border whitespace-nowrap overflow-ellipsis overflow-hidden max-w-[150px]">
+                        {to}
+                      </td>
                       <td className="px-4 py-3 border">
-                        {departureDate} {departureTime && `@ ${departureTime}`}
+                        {departureDate}
+                        {departureTime && ` @ ${departureTime}`}
                       </td>
                       <td className="px-4 py-3 border">
                         <button
@@ -128,7 +185,7 @@ const QueriesTable = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-4 text-gray-400">
+                  <td colSpan="8" className="text-center py-4 text-gray-400">
                     No queries found.
                   </td>
                 </tr>
@@ -186,7 +243,7 @@ const QueriesTable = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-600 text-white">
-                      <th className="px-4 py-2 border">#</th>
+                      <th className="px-4 py-2 border">Trip</th>
                       <th className="px-4 py-2 border">From</th>
                       <th className="px-4 py-2 border">To</th>
                       <th className="px-4 py-2 border">Passengers</th>
