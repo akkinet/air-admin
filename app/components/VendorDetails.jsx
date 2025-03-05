@@ -30,7 +30,7 @@ export default function VendorDetails({ session }) {
 
             if (session && session.user?.email) {
                 const response = await fetch(
-                    `/api/vendor?email=${session.user.email}`
+                    `/api/vendor/${session.user.email}`
                 );
                 const data = await response.json();
                 setVendor(data);

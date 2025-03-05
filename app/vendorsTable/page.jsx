@@ -58,7 +58,7 @@ const VendorsTable = () => {
             <thead>
               <tr className="bg-gray-700 text-white">
                 <th className="px-4 py-3 border">S.No</th>
-                <th className="px-4 py-3 border">ID</th>
+                <th className="px-4 py-3 border">Email</th>
                 <th className="px-4 py-3 border">Corporate Name</th>
                 <th className="px-4 py-3 border">Full Name</th>
                 <th className="px-4 py-3 border">Phone</th>
@@ -75,7 +75,7 @@ const VendorsTable = () => {
                     className="border-t border-gray-700 hover:bg-gray-700"
                   >
                     <td className="px-4 py-3 border">{index + 1}</td>
-                    <td className="px-4 py-3 border">{vendor._id}</td>
+                    <td className="px-4 py-3 border">{vendor.email}</td>
                     <td className="px-4 py-3 border">{vendor.corporateName}</td>
                     <td className="px-4 py-3 border">
                       {vendor.firstName} {vendor.lastName}
