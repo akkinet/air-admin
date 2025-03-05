@@ -33,3 +33,18 @@ export async function PUT(req, ctx) {
     );
   }
 }
+
+export async function GET(req, ctx) {
+  try{
+    const id = (await ctx.params).id; 
+    const vendorsCollection = db.collection("AIR_VENDORS");
+    const result = await vendorsCollection.findOne({email: id});
+    return NextResponse.json(result)
+  }catch(error){
+    console.error("MONGO err:", error);
+    return NextResponse.json(
+      { message: "Failed to update data", error: error.message },
+      { status: 500 }
+    );
+  }
+}

@@ -1,9 +1,8 @@
 "use client";
-import React from "react";
-
-// import aircraftModelsData from '';
+import React, { useState } from "react";
 
 const AircraftModels = () => {
+  const [aircraftModelsData, setAircraftModelsData] = useState([]);
   return (
     <div className="p-6 bg-gray-900 text-white">
       <h2 className="text-2xl font-semibold mb-4">List of Existing Aircraft Models</h2>
