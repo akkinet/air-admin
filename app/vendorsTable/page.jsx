@@ -29,7 +29,7 @@ const VendorsTable = () => {
   const handleApproveVendor = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/vendor/${selectedVendor.ID}?verified=true`,
+        `http://localhost:3000/api/vendor/${selectedVendor._id}?verified=true`,
         {
           method: "PUT",
         }
@@ -71,11 +71,11 @@ const VendorsTable = () => {
               {vendorList.length > 0 ? (
                 vendorList.map((vendor, index) => (
                   <tr
-                    key={vendor.ID}
+                    key={vendor._id}
                     className="border-t border-gray-700 hover:bg-gray-700"
                   >
                     <td className="px-4 py-3 border">{index + 1}</td>
-                    <td className="px-4 py-3 border">{vendor.ID}</td>
+                    <td className="px-4 py-3 border">{vendor._id}</td>
                     <td className="px-4 py-3 border">{vendor.corporateName}</td>
                     <td className="px-4 py-3 border">
                       {vendor.firstName} {vendor.lastName}
@@ -301,9 +301,6 @@ const VendorsTable = () => {
     </div>
   </div>
 )}
-
-
-
     </div>
   );
 };
