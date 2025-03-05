@@ -62,7 +62,7 @@ export default {
       
       if (account) {
         if(account.provider && account.provider == "google"){
-          const response = await fetch(`${process.env.API_URL}/vendor?email=${user.email}`)
+          const response = await fetch(`${process.env.API_URL}/vendor/${user.email}`)
           if (response.ok) {
             const vendor  = await response.json();
             token.isVendorRegistered = true;
