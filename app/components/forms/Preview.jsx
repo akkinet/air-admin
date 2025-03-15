@@ -8,8 +8,6 @@ const PreviewPage = () => {
   const { formData, updateFormData } = useFormContext();
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-
-
   useEffect(() => {
     const savedData = sessionStorage.getItem("formData");
     if (savedData) {
@@ -21,14 +19,11 @@ const PreviewPage = () => {
     }
   }, []);
 
-
   const handleSubmit = () => {
-    sessionStorage.removeItem("formData");  // Clear form data from session storage
+    sessionStorage.removeItem("formData"); // Clear form data from session storage
     console.log("Form Submitted Data:", formData);
     alert("Form submitted successfully!");
-    // window.location.href = "/fleetRegistration";
-    setIsSubmitted(true);  // Show Thank You Page
-
+    setIsSubmitted(true); // Show Thank You Page
   };
 
   if (isSubmitted) {
@@ -38,38 +33,58 @@ const PreviewPage = () => {
   return (
     <div className="container mx-auto py-12 px-6">
       <h1 className="text-4xl font-bold text-center mb-12">Preview Your Submission</h1>
-      {/* Fleet details */}
+      
+      {/* Fleet Details */}
       <div className="bg-white shadow-lg rounded-lg p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Fleet Details</h2>
         <div className="space-y-4">
           {formData?.fleetDetails && Object.keys(formData.fleetDetails).length > 0 ? (
-            Object.entries(formData.fleetDetails).map(([key, value]) => (
-              <div key={key} className="flex justify-between border-b pb-2">
-                <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>
-                <span>
-                  {key === "documents" && value && value.name  // Check for nested file name
-                    ? value.name
-                    : typeof value === "object" && value !== null
-                      ? Array.isArray(value)
-                        ? value.join(", ")  // Join arrays as a string
-                        : JSON.stringify(value)  // Stringify objects
-                      : value}
-                </span>
-              </div>
-            ))
+            Object.entries(formData.fleetDetails).map(([key, value]) => {
+              let displayValue;
+              if (key === "documents" && value && value.name) {
+                displayValue = value.name;
+              } else if (key === "restrictedAirports" && Array.isArray(value)) {
+                displayValue =
+                  value.length > 0
+                    ? value
+                        .map(
+                          (airport) =>
+                            `${airport.name} (${airport.iata_code}, ${airport.icao_code})`
+                        )
+                        .join(", ")
+                    : "None";
+              } else if (typeof value === "object" && value !== null) {
+                displayValue = Array.isArray(value)
+                  ? value.join(", ")
+                  : JSON.stringify(value);
+              } else {
+                displayValue = value;
+              }
+              return (
+                <div key={key} className="flex justify-between border-b pb-2">
+                  <span className="font-medium capitalize">
+                    {key.replace(/_/g, " ")}:
+                  </span>
+                  <span>{displayValue}</span>
+                </div>
+              );
+            })
           ) : (
             <p>No fleet details available.</p>
           )}
         </div>
       </div>
-      {/* Aircraft Gallery*/}
+      
+      {/* Aircraft Gallery */}
       <div className="bg-white shadow-lg rounded-lg p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Aircraft Gallery</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {formData?.aircraftGallery && Object.keys(formData.aircraftGallery).length > 0 ? (
             <>
-              {Object.entries(formData.aircraftGallery).map(([section, images]) => (
-                section !== 'video' && images && Object.entries(images).map(([view, url]) => (
+              {Object.entries(formData.aircraftGallery).map(([section, images]) =>
+                section !== "video" &&
+                images &&
+                Object.entries(images).map(([view, url]) => (
                   <div key={`${section}-${view}`} className="border rounded-xl overflow-hidden shadow-md">
                     <img
                       src={url}
@@ -83,7 +98,7 @@ const PreviewPage = () => {
                     </div>
                   </div>
                 ))
-              ))}
+              )}
 
               {/* Render Video Separately */}
               {formData.aircraftGallery.video && (
@@ -102,10 +117,9 @@ const PreviewPage = () => {
           ) : (
             <p>No images or video available in the gallery.</p>
           )}
-
-
         </div>
       </div>
+      
       {/* Travel Modes Section */}
       <div className="bg-white shadow-lg rounded-lg p-8 mb-8">
         <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Selected Travel Modes</h2>
@@ -113,12 +127,16 @@ const PreviewPage = () => {
           {formData?.travelmodes && Object.keys(formData.travelmodes).length > 0 ? (
             Object.entries(formData.travelmodes).map(([mode, details]) => (
               <div key={mode} className="border-b pb-4">
-                <h3 className="text-xl font-medium capitalize">{mode.replace(/_/g, " ")}</h3>
+                <h3 className="text-xl font-medium capitalize">
+                  {mode.replace(/_/g, " ")}
+                </h3>
                 <div className="mt-2 space-y-2">
                   {Object.entries(details).length > 0 ? (
                     Object.entries(details).map(([key, value]) => (
                       <div key={key} className="flex justify-between border-t pt-2">
-                        <span className="capitalize">{key.replace(/_/g, " ")}:</span>
+                        <span className="capitalize">
+                          {key.replace(/_/g, " ")}:
+                        </span>
                         <span>
                           {typeof value === "object" ? (
                             Object.entries(value).map(([subKey, subValue]) => (
@@ -144,22 +162,35 @@ const PreviewPage = () => {
           )}
         </div>
       </div>
-      {/* Add on Services Section */}
+      
+      {/* Additional Amenities Section */}
       <div className="bg-white shadow-lg rounded-lg p-8 mb-8">
-        <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Additional Amenities</h2>
+        <h2 className="text-2xl font-semibold mb-4 border-b pb-2">
+          Additional Amenities
+        </h2>
         <div className="space-y-4">
-          {formData.additionalAmenities && Object.keys(formData.additionalAmenities).length > 0 ? (
+          {formData.additionalAmenities &&
+          Object.keys(formData.additionalAmenities).length > 0 ? (
             Object.entries(formData.additionalAmenities).map(([key, value]) => (
               <div key={key} className="border-b pb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="capitalize font-medium">{key.replace(/_/g, " ")}</span>
+                  <span className="capitalize font-medium">
+                    {key.replace(/_/g, " ")}
+                  </span>
                   <span className="font-semibold">{value.value}</span>
                 </div>
-                {/* Check and display name and phone if available */}
                 {(value.name || value.phone) && (
                   <div className="text-sm text-gray-600 space-y-1">
-                    {value.name && <p><span className="font-semibold">Name:</span> {value.name}</p>}
-                    {value.phone && <p><span className="font-semibold">Phone:</span> {value.phone}</p>}
+                    {value.name && (
+                      <p>
+                        <span className="font-semibold">Name:</span> {value.name}
+                      </p>
+                    )}
+                    {value.phone && (
+                      <p>
+                        <span className="font-semibold">Phone:</span> {value.phone}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -184,8 +215,6 @@ const PreviewPage = () => {
         >
           Confirm and Submit
         </button>
-
-
       </div>
     </div>
   );

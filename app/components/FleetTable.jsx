@@ -28,7 +28,7 @@ const FleetTable = ({ fleets }) => {
   // Filter fleets by Fleet ID or vendor email
   const filteredFleets = fleets.filter((fleet) => {
     const fleetId = fleet._id?.toLowerCase() || "";
-    const vendorEmail = fleet.vendor_email?.toLowerCase() || "";
+    const vendorEmail = fleet.fleetDetails.vendor_email?.toLowerCase() || "";
     return (
       fleetId.includes(searchTerm) || vendorEmail.includes(searchTerm)
     );
