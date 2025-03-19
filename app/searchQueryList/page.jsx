@@ -59,11 +59,10 @@ const QueriesTable = () => {
       );
     });
 
-  // Build an array of “rows” for the table: each segment becomes its own row.
+  // Build an array of “rows” for the table: each query becomes one row.
   const rows = [];
   filteredQueries.forEach((query) => {
     const { _id, segments, userInfo } = query;
-    // If no segments, still push a single row
     if (!segments || segments.length === 0) {
       rows.push({
         query,
@@ -79,21 +78,22 @@ const QueriesTable = () => {
         },
       });
     } else {
-      segments.forEach((segment) => {
-        rows.push({
-          query,
-          rowData: {
-            _id,
-            name: userInfo?.name || "N/A",
-            email: userInfo?.email || "N/A",
-            phone: userInfo?.phone || "N/A",
-            // Extract only the part within parentheses for 'from' & 'to'
-            from: extractCodeInParentheses(segment.from),
-            to: extractCodeInParentheses(segment.to),
-            departureDate: segment.departureDate,
-            departureTime: segment.departureTime,
-          },
-        });
+      // Use the first segment for 'from' and the last segment for 'to'
+      const firstSegment = segments[0];
+      const lastSegment = segments[segments.length - 1];
+      rows.push({
+        query,
+        rowData: {
+          _id,
+          name: userInfo?.name || "N/A",
+          email: userInfo?.email || "N/A",
+          phone: userInfo?.phone || "N/A",
+          from: extractCodeInParentheses(firstSegment.from),
+          to: extractCodeInParentheses(lastSegment.to),
+          // Assuming departure date/time are taken from the first segment
+          departureDate: firstSegment.departureDate,
+          departureTime: firstSegment.departureTime,
+        },
       });
     }
   });

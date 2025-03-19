@@ -11,6 +11,7 @@ const amenitiesData = [
       "Vip Cab Pick & Drop",
       "Vvip Car inside Airport",
       "Vvip car Pick & Drop",
+      "choti ladki service "
     ],
   },
   {

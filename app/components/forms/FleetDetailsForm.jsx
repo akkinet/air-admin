@@ -296,8 +296,8 @@ const FleetDetailsForm = () => {
           {renderInput("Last Maintenance Date", "lastMaintenance", fleetDetails, handleChange, "date")}
           {renderInput("Takeoff Runway (in Feet)", "takeoffRunway", fleetDetails, handleChange)}
           {renderInput("Landing Runway (in Feet)", "landingRunway", fleetDetails, handleChange)}
-          {renderInput("Seat Capacity", "seatCapacity", fleetDetails, handleChange, "number", "", true)}
-          {renderInput("Luggage (in Kgs)", "luggage", fleetDetails, handleChange, "number", "", true)}
+          {renderInput("Max Seating Capacity", "seatCapacity", fleetDetails, handleChange, "number", "", true)}
+          {renderInput("Max Luggage Capacity (in Kgs)", "luggage", fleetDetails, handleChange, "number", "", true)}
         </div>
 
         {/* New Base Station Fields */}

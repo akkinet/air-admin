@@ -5,15 +5,13 @@ import {
   FaChartLine,
   FaPlane,
   FaUsers,
-  FaBuilding,
-  FaStore,
   FaBox,
-  FaMapMarkerAlt,
   FaCouch,
   FaPlaneDeparture,
   FaSearchLocation
 } from "react-icons/fa";
 import { IoIosLogOut } from "react-icons/io";
+import { MdAirplaneTicket } from "react-icons/md";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -41,24 +39,21 @@ const Sidebar = () => {
   // only for admin department 
   const allModules = [
     { path: "/", label: "Dashboard", icon: FaChartLine },
+    { path: "/searchQueryList", label: "Search Listing", icon: FaSearchLocation },
+    { path: "/booking", label: "Bookings", icon: MdAirplaneTicket },
     { path: "/aircrafts", label: "Aircrafts", icon: FaPlane },
     { path: "/users", label: "Users", icon: FaUsers },
-    // { path: "/cognitoForm", label: "Aircraft Listing", icon: FaBuilding },
-    { path: "/searchQueryList", label: "Search Listing", icon: FaSearchLocation },
-    // { path: "/aircraftVendors", label: "Aircraft Vendors", icon: FaStore },
     { path: "/vendorsTable", label: "Vendors List", icon: FaBox },
-    { path: "/aircraftModels", label: "Aircraft Models", icon: FaPlane },
-    { path: "/aircraft-types", label: "Aircraft Types", icon: FaPlaneDeparture },
-    // { path: "/aircraftBases", label: "Aircraft Bases", icon: FaMapMarkerAlt },
-    { path: "/aircraft-seat-modes", label: "Aircraft Seat Modes", icon: FaCouch },
     { path: "/fleetRegistration", label: "Fleet Registration form", icon: FaCouch },
-  ];
+    // { path: "/aircraftModels", label: "Aircraft Models", icon: FaPlane },
+    // { path: "/aircraft-types", label: "Aircraft Types", icon: FaPlaneDeparture },
+    // { path: "/aircraft-seat-modes", label: "Aircraft Seat Modes", icon: FaCouch },
 
+  ];
   // only for  verified and registered vendors
   if (session?.user?.isVendorRegistered && session?.user?.isVerified) {
     filteredModules.push({ path: "/fleetRegistration", label: "Fleet Registration form", icon: FaCouch });
   }
-
   const modulesToRender = session?.provider === "credentials" ? allModules : filteredModules;
 
   return (
