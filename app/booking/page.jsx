@@ -3,16 +3,24 @@ import React, { useState, useEffect } from "react";
 
 const Booking = () => {
   // State
-  const [bookingList, setBookingList] = useState([]); // Will hold an array of booking objects
+  const [bookingList, setBookingList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [viewMoreModalOpen, setViewMoreModalOpen] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null); // The entire booking object for the modal
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
-  // For search/filter
+  // For search/filter across all bookings
   const [searchTerm, setSearchTerm] = useState("");
   // For status filter (success or pending). Default is "success".
   const [statusFilter, setStatusFilter] = useState("success");
+
+  // Holds the fetched available fleets for each segment: { [segmentIndex]: [arrayOfFleetsReturned] }
+  const [availableFleets, setAvailableFleets] = useState({});
+  // Loading state for each segment’s “Modify Fleet” fetch
+  const [isSegmentLoading, setIsSegmentLoading] = useState({});
+
+  // Per-segment search terms for available fleets
+  const [fleetSearchTerm, setFleetSearchTerm] = useState({});
 
   // Helper function to format a number according to Indian numbering system
   const formatINR = (amount) => {
@@ -24,14 +32,12 @@ const Booking = () => {
     fetchBookings();
   }, []);
 
-  // Fetch from /api/booking
+  // Fetch from /api/booking (your internal endpoint)
   const fetchBookings = async () => {
     try {
       const response = await fetch("/api/booking");
       const data = await response.json();
-      // Handle array or single object response:
       const dataArray = Array.isArray(data) ? data : [data];
-
       setBookingList(dataArray);
       setIsLoading(false);
     } catch (error) {
@@ -40,11 +46,81 @@ const Booking = () => {
     }
   };
 
-  // Filter by status first, then by searchTerm (which can match _id, name, email, phone)
+  // Clean up the string, e.g. "Dubai International Airport (DXB)" → "Dubai International Airport"
+  const removeParentheses = (str = "") => {
+    return str.split("(")[0].trim();
+  };
+
+  // Handle "Modify Fleet" button click
+  const handleModifyFleet = async (segmentIndex) => {
+    if (!selectedBooking || !selectedBooking.segments) return;
+
+    const seg = selectedBooking.segments[segmentIndex];
+    // Clean up "from" and "to"
+    const from = removeParentheses(seg.from);
+    const to = removeParentheses(seg.to);
+    const date = seg.departureDate;
+    const passengers = seg.passengers;
+
+    // Set loading = true for this segment
+    setIsSegmentLoading((prev) => ({ ...prev, [segmentIndex]: true }));
+
+    try {
+      const url = `https://www.airambulanceaviation.co.in/api/search-flights?from=${encodeURIComponent(
+        from
+      )}&to=${encodeURIComponent(to)}&departureDate=${encodeURIComponent(
+        date
+      )}&travelerCount=${encodeURIComponent(passengers)}`;
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch available fleets.");
+      }
+      const data = await response.json();
+
+      if (data && data.finalFleet) {
+        setAvailableFleets((prev) => ({
+          ...prev,
+          [segmentIndex]: data.finalFleet,
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching available fleets:", error);
+    } finally {
+      // Turn off loading spinner
+      setIsSegmentLoading((prev) => ({ ...prev, [segmentIndex]: false }));
+    }
+  };
+
+  // Update the search term for a particular segment
+  const handleFleetSearchChange = (segmentIndex, val) => {
+    setFleetSearchTerm((prev) => ({
+      ...prev,
+      [segmentIndex]: val,
+    }));
+  };
+
+  // Filter the fleets based on user input (reg no, _id, price)
+  const filterFleets = (fleets, segmentIndex) => {
+    const searchVal = (fleetSearchTerm[segmentIndex] || "").toLowerCase();
+    if (!searchVal) return fleets; // no filtering if empty
+
+    return fleets.filter((item) => {
+      const { _id, fleetDetails } = item;
+      const registrationNo = fleetDetails?.registrationNo || "";
+      const price = fleetDetails?.pricing || "";
+
+      return (
+        _id?.toLowerCase().includes(searchVal) ||
+        registrationNo?.toLowerCase().includes(searchVal) ||
+        price?.toString().toLowerCase().includes(searchVal)
+      );
+    });
+  };
+
+  // Filter booking list by status, then by searchTerm
   const filteredBookings = bookingList
-    // Filter by status
     .filter((booking) => booking.status === statusFilter)
-    // Then filter by searchTerm
     .filter((booking) => {
       const { _id, user_info } = booking;
       const name = user_info?.name?.toLowerCase() || "";
@@ -108,10 +184,13 @@ const Booking = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-700 text-white">
+                <th className="px-4 py-3 border whitespace-nowrap">Sr No.</th>
                 <th className="px-4 py-3 border whitespace-nowrap">Name</th>
                 <th className="px-4 py-3 border whitespace-nowrap">Email</th>
                 <th className="px-4 py-3 border whitespace-nowrap">Phone</th>
-                <th className="px-4 py-3 border whitespace-nowrap">Amount Paid</th>
+                <th className="px-4 py-3 border whitespace-nowrap">
+                  Amount Paid
+                </th>
                 <th className="px-4 py-3 border whitespace-nowrap">Actions</th>
               </tr>
             </thead>
@@ -128,6 +207,9 @@ const Booking = () => {
                       key={`${_id}-${index}`}
                       className="border-t border-gray-700 hover:bg-gray-700"
                     >
+                      <td className="px-4 py-3 border whitespace-nowrap">
+                        {_id}
+                      </td>
                       <td className="px-4 py-3 border whitespace-nowrap">
                         {name}
                       </td>
@@ -146,6 +228,8 @@ const Booking = () => {
                           onClick={() => {
                             setSelectedBooking(booking);
                             setViewMoreModalOpen(true);
+                            setAvailableFleets({});
+                            setIsSegmentLoading({});
                           }}
                         >
                           View More
@@ -156,7 +240,7 @@ const Booking = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-4 text-gray-400">
+                  <td colSpan="6" className="text-center py-4 text-gray-400">
                     No bookings found.
                   </td>
                 </tr>
@@ -171,7 +255,9 @@ const Booking = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-3/4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-white">Booking Details</h2>
+              <h2 className="text-xl font-semibold text-white">
+                Booking Details
+              </h2>
               <button
                 className="text-gray-400 hover:text-white"
                 onClick={() => setViewMoreModalOpen(false)}
@@ -183,10 +269,8 @@ const Booking = () => {
             {/* Main Booking Details (excluding segments and user_info) */}
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(selectedBooking).map(([key, value]) => {
-                // We'll skip segments and user_info here to display them below
                 if (key === "segments" || key === "user_info") return null;
 
-                // Format total_amount if it exists
                 if (key === "total_amount" && !isNaN(value)) {
                   return (
                     <div key={key}>
@@ -251,9 +335,15 @@ const Booking = () => {
                         <tr className="border-t border-gray-500 hover:bg-gray-600">
                           <td className="px-4 py-2 border">{seg.from}</td>
                           <td className="px-4 py-2 border">{seg.to}</td>
-                          <td className="px-4 py-2 border">{seg.passengers}</td>
-                          <td className="px-4 py-2 border">{seg.departureDate}</td>
-                          <td className="px-4 py-2 border">{seg.departureTime}</td>
+                          <td className="px-4 py-2 border">
+                            {seg.passengers}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {seg.departureDate}
+                          </td>
+                          <td className="px-4 py-2 border">
+                            {seg.departureTime}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -267,10 +357,12 @@ const Booking = () => {
                         <table className="w-full text-left border-collapse bg-gray-700 rounded overflow-hidden">
                           <thead>
                             <tr className="bg-gray-600 text-white">
-                              <th className="px-4 py-2 border">Registration No</th>
+                              <th className="px-4 py-2 border">
+                                Registration No
+                              </th>
                               <th className="px-4 py-2 border">Type</th>
                               <th className="px-4 py-2 border">Model</th>
-                              <th className="px-4 py-2 border">Seating Capacity</th>
+                              <th className="px-4 py-2 border">Seats</th>
                               <th className="px-4 py-2 border">Price</th>
                               <th className="px-4 py-2 border">Time</th>
                             </tr>
@@ -290,12 +382,128 @@ const Booking = () => {
                                 {seg.selectedFleet.seatingCapacity}
                               </td>
                               <td className="px-4 py-2 border">
-                                {seg.selectedFleet.price}
+                                $ {seg.selectedFleet.price}
                               </td>
                               <td className="px-4 py-2 border">
                                 {seg.selectedFleet.time}
                               </td>
                             </tr>
+                          </tbody>
+                        </table>
+
+                        {/* Modify Fleet Button */}
+                        <div className="mt-4">
+                          <button
+                            className="px-3 py-1 bg-blue-500 text-white rounded flex items-center gap-2"
+                            onClick={() => handleModifyFleet(idx)}
+                            disabled={!!isSegmentLoading[idx]}
+                          >
+                            {isSegmentLoading[idx]
+                              ? (
+                                <>
+                                  <svg
+                                    className="animate-spin h-4 w-4 text-white"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                      fill="none"
+                                    ></circle>
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v4l3-5-3-5v4a12 12 0 00-12 12h4z"
+                                    ></path>
+                                  </svg>
+                                  Searching Fleet...
+                                </>
+                              )
+                              : "Modify Fleet"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Available Fleets Table (if any) */}
+                    {availableFleets[idx] && availableFleets[idx].length > 0 && (
+                      <div className="mt-4">
+                        {/* Heading + search bar */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
+                          <h5 className="text-white font-semibold mb-2 md:mb-0">
+                            Available Fleets ({availableFleets[idx].length})
+                          </h5>
+                          <input
+                            type="text"
+                            placeholder="Search by ID, Reg No, or Price"
+                            className="px-3 py-1 bg-gray-700 text-white rounded"
+                            value={fleetSearchTerm[idx] || ""}
+                            onChange={(e) =>
+                              handleFleetSearchChange(idx, e.target.value)
+                            }
+                          />
+                        </div>
+
+                        {/* Filter the fleets by search term */}
+                        <table className="w-full text-left border-collapse bg-gray-700 rounded overflow-hidden">
+                          <thead>
+                            <tr className="bg-gray-600 text-white">
+                              <th className="px-4 py-2 border">S. No</th>
+                              <th className="px-4 py-2 border">_id</th>
+                              <th className="px-4 py-2 border">
+                                Registration No
+                              </th>
+                              <th className="px-4 py-2 border">Type</th>
+                              <th className="px-4 py-2 border">Model</th>
+                              <th className="px-4 py-2 border">Seats</th>
+                              <th className="px-4 py-2 border">Price</th>
+                              <th className="px-4 py-2 border">Time</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filterFleets(availableFleets[idx], idx).map(
+                              (fleetItem, i) => {
+                                const { _id, flightTime, fleetDetails } =
+                                  fleetItem;
+                                return (
+                                  <tr
+                                    key={_id || i}
+                                    className="border-t border-gray-500 hover:bg-gray-600"
+                                  >
+                                    <td className="px-4 py-2 border">
+                                      {i + 1}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {_id || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {fleetDetails?.registrationNo || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {fleetDetails?.flightType || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {fleetDetails?.selectedModel || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {fleetDetails?.seatCapacity || "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {fleetDetails?.pricing
+                                        ? `$ ${fleetDetails.pricing}`
+                                        : "N/A"}
+                                    </td>
+                                    <td className="px-4 py-2 border">
+                                      {flightTime || "N/A"}
+                                    </td>
+                                  </tr>
+                                );
+                              }
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -312,23 +520,25 @@ const Booking = () => {
                   User Info
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(selectedBooking.user_info).map(([key, value]) => (
-                    <div key={key}>
-                      <label className="block text-white font-semibold">
-                        {key}
-                      </label>
-                      <input
-                        type="text"
-                        readOnly
-                        value={
-                          typeof value === "object"
-                            ? JSON.stringify(value, null, 2)
-                            : String(value)
-                        }
-                        className="w-full px-4 py-2 bg-gray-700 text-white rounded"
-                      />
-                    </div>
-                  ))}
+                  {Object.entries(selectedBooking.user_info).map(
+                    ([key, value]) => (
+                      <div key={key}>
+                        <label className="block text-white font-semibold">
+                          {key}
+                        </label>
+                        <input
+                          type="text"
+                          readOnly
+                          value={
+                            typeof value === "object"
+                              ? JSON.stringify(value, null, 2)
+                              : String(value)
+                          }
+                          className="w-full px-4 py-2 bg-gray-700 text-white rounded"
+                        />
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             )}
