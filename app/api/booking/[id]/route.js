@@ -7,7 +7,7 @@ export async function PUT(request, { params }) {
 
   try {
     const { segmentIdx, selectedFleetData } = await request.json();
-    const Booking = db.collection("bookings");
+    const Booking = db.collection("Booking");
 
     // Validate segment index type
     if (typeof segmentIdx !== 'number' || segmentIdx < 0) {
