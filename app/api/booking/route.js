@@ -5,7 +5,7 @@ export const GET = async (req) => {
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
-    const Booking = db.collection("bookings");
+    const Booking = db.collection("Booking");
     const filter = {};
     if (status) filter.status = status;
 
