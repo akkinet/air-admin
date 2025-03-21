@@ -2,188 +2,210 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-const TravelModes = () => {
+// A configuration array for the modes, so we can loop more cleanly
+const modes = [
+  { id: "sitting", name: "Sitting Mode", fields: ["Seats", "Bags (Kg)", "Restroom"] },
+  { id: "night", name: "Night Mode", fields: ["Common Beds", "Private Rooms", "Recliners"] },
+  { id: "press", name: "Press Mode", fields: ["Podium", "Seats"] },
+  { id: "medical", name: "Medical Mode", fields: ["Patient Beds", "Guest Seats"] },
+  {
+    id: "cargo",
+    name: "Cargo Mode",
+    fields: ["Weight in (TONS)", "Length (ft)", "Height (ft)", "Width (ft)"],
+  },
+];
+
+export default function TravelModes() {
   const [selectedModes, setSelectedModes] = useState([]);
   const [modeDetails, setModeDetails] = useState({});
 
-  const modes = [
-    { id: "sitting", name: "Sitting Mode" },
-    { id: "night", name: "Night Mode" },
-    { id: "press", name: "Press Mode" },
-    { id: "medical", name: "Medical Mode" },
-    { id: "cargo", name: "Cargo Mode" },
-  ];
-
+  // Load from session storage on mount
   useEffect(() => {
     const savedData = JSON.parse(sessionStorage.getItem("formData")) || {};
     const existingModes = savedData.travelModes || {};
 
-    // Initialize mode details from storage or as empty
-    setModeDetails({
-      ...Object.fromEntries(modes.map((mode) => [mode.id, existingModes[mode.id] || {}])),
+    // Create a fresh modeDetails object for all modes
+    // if the user previously had some data for a mode, we reuse it
+    const newModeDetails = {};
+    modes.forEach((m) => {
+      newModeDetails[m.id] = existingModes[m.id] || {};
     });
 
-    // Track selected modes
-    setSelectedModes(Object.keys(existingModes).filter((key) => Object.keys(existingModes[key]).length > 0));
+    setModeDetails(newModeDetails);
+
+    // figure out which modes are "selected" (non-empty) in storage
+    const selected = Object.keys(existingModes).filter(
+      (modeId) => Object.keys(existingModes[modeId] || {}).length > 0
+    );
+    setSelectedModes(selected);
   }, []);
 
+  // Toggling a mode’s checkbox
   const handleCheckboxChange = (modeId) => {
-    let updatedModes;
-  
+    let updated;
     if (selectedModes.includes(modeId)) {
-      updatedModes = selectedModes.filter((id) => id !== modeId);
-      setModeDetails((prev) => ({ ...prev, [modeId]: {} }));  // Reset to empty object if unchecked
+      // Mode was selected, so uncheck it
+      updated = selectedModes.filter((id) => id !== modeId);
+      // Clear out the data in that mode, if you want to truly reset
+      setModeDetails((prev) => ({ ...prev, [modeId]: {} }));
     } else {
-      updatedModes = [...selectedModes, modeId];
-      setModeDetails((prev) => ({ ...prev, [modeId]: prev[modeId] || {} }));
+      // Mode was not selected, so add it
+      updated = [...selectedModes, modeId];
     }
-  
-    setSelectedModes(updatedModes);
-  
-    // Directly update travelModes in session storage
+
+    setSelectedModes(updated);
+
+    // Immediately update sessionStorage
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    existingFormData.travelModes = {
-      ...existingFormData.travelModes,
-      [modeId]: modeDetails[modeId] || {},
-    };
-    
+    const travelModes = existingFormData.travelModes || {};
+    if (!updated.includes(modeId)) {
+      // user just unchecked it => clear it
+      travelModes[modeId] = {};
+    } else {
+      // user just checked it => ensure a data object
+      travelModes[modeId] = modeDetails[modeId] || {};
+    }
+
+    existingFormData.travelModes = travelModes;
     sessionStorage.setItem("formData", JSON.stringify(existingFormData));
   };
-  
 
+  // User typing into any numeric field
   const handleInputChange = (modeId, field, value) => {
-    const updatedDetails = {
-      ...modeDetails,
-      [modeId]: {
-        ...modeDetails[modeId],
-        [field.includes("(ft)") ? "Space" : field]: {
-          ...(modeDetails[modeId]?.Space || {}),
-          [field.replace(" (ft)", "")]: value,
+    // We store each field as an object for your nested approach:
+    // e.g.  cargo: {
+    //   "Weight in (TONS)": { "Weight in (TONS)": "850" },
+    //   "Space": { "Length": "20", "Height": "580", "Width": "25" }
+    // }
+    // But in your code, you’re storing "Length (ft)" => as "Space": { "Length": "value" } if it has "(ft)" in the label.
+    // We'll continue that logic:
+
+    const isFtField = field.includes("(ft)");
+    const cleanedField = field.replace(" (ft)", "");
+
+    const prevModeData = modeDetails[modeId] || {};
+    let updatedModeData = {};
+
+    if (isFtField) {
+      // If it's a dimension field for cargo, store under "Space"
+      const existingSpace = prevModeData.Space || {};
+      updatedModeData = {
+        ...prevModeData,
+        Space: {
+          ...existingSpace,
+          [cleanedField]: value,
         },
-      },
-    };
-    setModeDetails(updatedDetails);
-  
-    // Update existing travelModes directly in session storage
+      };
+    } else {
+      // Otherwise, store e.g. "Seats": { "Seats": "12" }
+      updatedModeData = {
+        ...prevModeData,
+        [field]: {
+          [field]: value,
+        },
+      };
+    }
+
+    setModeDetails((prev) => ({
+      ...prev,
+      [modeId]: updatedModeData,
+    }));
+
+    // Update in session storage
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    existingFormData.travelModes[modeId] = updatedDetails[modeId];
-  
+    const travelModes = existingFormData.travelModes || {};
+    travelModes[modeId] = updatedModeData;
+    existingFormData.travelModes = travelModes;
     sessionStorage.setItem("formData", JSON.stringify(existingFormData));
   };
-  
-  
 
-  const renderModeDetails = (modeId) => {
-    const modeConfig = {
-      sitting: ["Seats", "Bags (Kg)", "Restroom"],
-      night: ["Common Beds", "Private Rooms", "Recliners"],
-      press: ["Podium", "Seats"],
-      medical: ["Patient Beds", "Guest Seats"],
-      cargo: ["Weight in (TONS)", "Length (ft)", "Height (ft)", "Width (ft)"],  
-    };
-    
-
-    return (
-      <ModeSection title={modes.find((m) => m.id === modeId).name}>
-        {modeConfig[modeId]?.map((label) => (
-          <ModeInput
-            key={label}
-            label={label}
-            modeId={modeId}
-            handleInputChange={handleInputChange}
-          />
-        ))}
-      </ModeSection>
-    );
-  };
-
+  // On "Next," we store the final data. This is optional if you already store as user types
   const handleNextClick = () => {
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    const finalFormData = {
-      ...existingFormData,
-      travelModes: {
-        ...Object.fromEntries(modes.map((mode) => [mode.id, modeDetails[mode.id] || {}])),
-      },
-    };
-
-    // Store final data and console log it
-    sessionStorage.setItem("formData", JSON.stringify(finalFormData));
+    existingFormData.travelModes = modeDetails;
+    sessionStorage.setItem("formData", JSON.stringify(existingFormData));
   };
 
   return (
-    <div className="container mx-auto py-12 px-6 max-w-5xl">
+    <div className="container mx-auto py-12 px-6 max-w-6xl">
       <h1 className="text-5xl font-extrabold text-center mb-12 bg-gradient-to-r from-indigo-500 to-purple-500 text-transparent bg-clip-text">
         Select Travel Modes
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-        {modes.map((mode) => (
-          <div
-            key={mode.id}
-            className="flex items-center space-x-4 p-6 border border-gray-200 rounded-xl shadow-md bg-gradient-to-br from-gray-50 to-gray-100 hover:shadow-lg transition-all"
-          >
-            <input
-              type="checkbox"
-              id={mode.id}
-              className="w-5 h-5 text-indigo-500 rounded focus:ring-0"
-              checked={selectedModes.includes(mode.id)}
-              onChange={() => handleCheckboxChange(mode.id)}
-            />
-            <label
-              htmlFor={mode.id}
-              className="text-lg font-semibold text-gray-800 cursor-pointer"
+      {/* Mode checkboxes */}
+      <div className="bg-white p-6 rounded-lg shadow space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {modes.map((mode) => (
+            <div
+              key={mode.id}
+              className="flex items-center space-x-3 p-4 border border-gray-200 rounded-xl hover:shadow transition-all"
             >
-              {mode.name}
-            </label>
-          </div>
-        ))}
+              <input
+                type="checkbox"
+                id={mode.id}
+                className="w-5 h-5 text-indigo-500 rounded focus:ring-0"
+                checked={selectedModes.includes(mode.id)}
+                onChange={() => handleCheckboxChange(mode.id)}
+              />
+              <label htmlFor={mode.id} className="font-semibold cursor-pointer">
+                {mode.name}
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {/* Render inputs for each selected mode */}
+        <div className="space-y-8">
+          {selectedModes.map((modeId) => {
+            // find the mode config
+            const thisMode = modes.find((m) => m.id === modeId);
+            if (!thisMode) return null;
+
+            return (
+              <div
+                key={modeId}
+                className="border border-gray-200 rounded-xl p-6 shadow"
+              >
+                <h2 className="text-2xl font-bold mb-6">{thisMode.name}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {thisMode.fields.map((label) => (
+                    <div key={label}>
+                      <label className="block text-md font-semibold mb-2">
+                        {label}
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0"
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        onChange={(e) =>
+                          handleInputChange(modeId, label, e.target.value)
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="space-y-12">
-        {selectedModes.map((mode) => (
-          <div key={mode}>{renderModeDetails(mode)}</div>
-        ))}
-      </div>
-
-      <div className="flex justify-between mt-16">
+      <div className="flex justify-between mt-10">
         <Link href="/fleetRegistration/imageGallery">
-          <button className="px-8 py-3 rounded-lg bg-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
+          <button className="px-8 py-3 rounded-lg bg-gradient-to-r from-red-400 to-red-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform">
             Back
           </button>
-        </Link >
+        </Link>
+
         <Link href="/fleetRegistration/addonServices">
-        
-        <button
-          onClick={handleNextClick}
-          className="bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 rounded-lg transition duration-200"
-        >
-          Next
-        </button>
+          <button
+            onClick={handleNextClick}
+            className="px-8 py-3 rounded-lg bg-gradient-to-r from-green-400 to-green-500 text-white font-semibold shadow-lg hover:scale-105 transition-transform"
+          >
+            Next
+          </button>
         </Link>
       </div>
     </div>
   );
-};
-
-const ModeSection = ({ title, children }) => (
-  <div className="border border-gray-200 rounded-2xl p-8 shadow-lg">
-    <h2 className="text-3xl font-bold mb-8">{title}</h2>
-    <div className="flex flex-wrap gap-6">
-      {children}
-    </div>
-  </div>
-);
-
-
-const ModeInput = ({ label, modeId, handleInputChange }) => (
-  <div>
-    <label className="block text-lg font-medium mb-2">{label}</label>
-    <input
-      type="number"
-      className="w-full p-4 border rounded-lg"
-      onChange={(e) => handleInputChange(modeId, label, e.target.value)}
-    />
-  </div>
-);
-
-export default TravelModes;
+}

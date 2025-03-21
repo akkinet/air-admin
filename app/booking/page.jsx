@@ -22,6 +22,14 @@ const Booking = () => {
   // Per-segment search terms for available fleets
   const [fleetSearchTerm, setFleetSearchTerm] = useState({});
 
+  // Track which fleet is selected (checkbox) for each segment
+  // e.g. { [segmentIndex]: { fleetId: string, fleetData: {...} } }
+  const [selectedFleetForSegments, setSelectedFleetForSegments] = useState({});
+
+  // Track the "Change Fleet" button state for each segment
+  // possible values: "idle" | "loading" | "success"
+  const [isFleetChanging, setIsFleetChanging] = useState({});
+
   // Helper function to format a number according to Indian numbering system
   const formatINR = (amount) => {
     if (!amount || isNaN(amount)) return amount;
@@ -38,7 +46,8 @@ const Booking = () => {
       const response = await fetch("/api/booking");
       const data = await response.json();
       const dataArray = Array.isArray(data) ? data : [data];
-      setBookingList(dataArray);
+      // Reverse the array so that the last booking appears at the top
+      setBookingList(dataArray.reverse());
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching booking data:", error);
@@ -89,6 +98,13 @@ const Booking = () => {
     } finally {
       // Turn off loading spinner
       setIsSegmentLoading((prev) => ({ ...prev, [segmentIndex]: false }));
+      // Reset any previously selected fleet for this segment
+      setSelectedFleetForSegments((prev) => ({
+        ...prev,
+        [segmentIndex]: null,
+      }));
+      // Reset isFleetChanging for this segment
+      setIsFleetChanging((prev) => ({ ...prev, [segmentIndex]: "idle" }));
     }
   };
 
@@ -136,6 +152,73 @@ const Booking = () => {
         idString.includes(search)
       );
     });
+
+  // Handle checkbox selection for an available fleet
+  const handleFleetSelect = (segmentIndex, fleetId, fleetItem) => {
+    // Only one checkbox can be selected at a time for this segment
+    setSelectedFleetForSegments((prev) => ({
+      ...prev,
+      [segmentIndex]: {
+        fleetId,
+        fleetData: fleetItem,
+      },
+    }));
+  };
+
+  // PUT request to update the selected fleet
+  const handleChangeFleet = async (segmentIndex) => {
+    if (!selectedFleetForSegments[segmentIndex]) return;
+    if (!selectedBooking?._id) return; // in case there's no booking selected
+
+    setIsFleetChanging((prev) => ({ ...prev, [segmentIndex]: "loading" }));
+
+    const { fleetData } = selectedFleetForSegments[segmentIndex];
+
+    // Construct the payload from the selected fleet data
+    const payload = {
+      segmentIdx: segmentIndex,
+      selectedFleetData: {
+        registrationNo: fleetData.fleetDetails?.registrationNo || "",
+        type: fleetData.fleetDetails?.flightType || "",
+        model: fleetData.fleetDetails?.selectedModel || "",
+        seatingCapacity: fleetData.fleetDetails?.seatCapacity || 0,
+        price: fleetData.fleetDetails?.pricing || "",
+        time: fleetData.flightTime || "",
+      },
+    };
+
+    try {
+      const res = await fetch(`/api/booking/${selectedBooking._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update fleet.");
+      }
+
+      // If success, update local selectedBooking data so UI matches new fleet
+      const updatedBooking = { ...selectedBooking };
+      updatedBooking.segments[segmentIndex].selectedFleet = {
+        registrationNo: payload.selectedFleetData.registrationNo,
+        type: payload.selectedFleetData.type,
+        model: payload.selectedFleetData.model,
+        seatingCapacity: payload.selectedFleetData.seatingCapacity,
+        price: payload.selectedFleetData.price,
+        time: payload.selectedFleetData.time,
+      };
+
+      setSelectedBooking(updatedBooking);
+      setIsFleetChanging((prev) => ({ ...prev, [segmentIndex]: "success" }));
+    } catch (error) {
+      console.error("Error changing fleet:", error);
+      // Revert to idle (or handle error state if needed)
+      setIsFleetChanging((prev) => ({ ...prev, [segmentIndex]: "idle" }));
+    }
+  };
 
   return (
     <div className="flex-1 p-6 bg-gray-900 text-white min-h-screen">
@@ -230,6 +313,8 @@ const Booking = () => {
                             setViewMoreModalOpen(true);
                             setAvailableFleets({});
                             setIsSegmentLoading({});
+                            setSelectedFleetForSegments({});
+                            setIsFleetChanging({});
                           }}
                         >
                           View More
@@ -253,7 +338,7 @@ const Booking = () => {
       {/* View More Modal */}
       {viewMoreModalOpen && selectedBooking && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-3/4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg w-[80%] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-white">
                 Booking Details
@@ -398,45 +483,47 @@ const Booking = () => {
                             onClick={() => handleModifyFleet(idx)}
                             disabled={!!isSegmentLoading[idx]}
                           >
-                            {isSegmentLoading[idx]
-                              ? (
-                                <>
-                                  <svg
-                                    className="animate-spin h-4 w-4 text-white"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                      fill="none"
-                                    ></circle>
-                                    <path
-                                      className="opacity-75"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8v4l3-5-3-5v4a12 12 0 00-12 12h4z"
-                                    ></path>
-                                  </svg>
-                                  Searching Fleet...
-                                </>
-                              )
-                              : "Modify Fleet"}
+                            {isSegmentLoading[idx] ? (
+                              <>
+                                <svg
+                                  className="animate-spin h-4 w-4 text-white"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4l3-5-3-5v4a12 12 0 00-12 12h4z"
+                                  ></path>
+                                </svg>
+                                Searching Fleet...
+                              </>
+                            ) : (
+                              "Modify Fleet"
+                            )}
                           </button>
                         </div>
                       </div>
                     )}
 
-                    {/* Available Fleets Table (if any) */}
+                    {/* Available Fleets (if any) */}
                     {availableFleets[idx] && availableFleets[idx].length > 0 && (
                       <div className="mt-4">
-                        {/* Heading + search bar */}
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
-                          <h5 className="text-white font-semibold mb-2 md:mb-0">
-                            Available Fleets ({availableFleets[idx].length})
-                          </h5>
+                        {/* Heading + search bar + "Change Fleet" button */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-3">
+                          <div>
+                            <h5 className="text-white font-semibold mb-2 md:mb-0">
+                              Available Fleets ({availableFleets[idx].length})
+                            </h5>
+                          </div>
                           <input
                             type="text"
                             placeholder="Search by ID, Reg No, or Price"
@@ -446,12 +533,51 @@ const Booking = () => {
                               handleFleetSearchChange(idx, e.target.value)
                             }
                           />
+                          <button
+                            className="px-3 py-1 bg-green-600 text-white rounded flex items-center gap-2"
+                            onClick={() => handleChangeFleet(idx)}
+                            disabled={
+                              !selectedFleetForSegments[idx] ||
+                              isFleetChanging[idx] === "loading" ||
+                              isFleetChanging[idx] === "success"
+                            }
+                          >
+                            {isFleetChanging[idx] === "loading" ? (
+                              <>
+                                <svg
+                                  className="animate-spin h-4 w-4 text-white"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4l3-5-3-5v4a12 12 0 00-12 12h4z"
+                                  ></path>
+                                </svg>
+                                Changing Fleet...
+                              </>
+                            ) : isFleetChanging[idx] === "success" ? (
+                              "Fleet changed successfully"
+                            ) : (
+                              "Change Fleet"
+                            )}
+                          </button>
                         </div>
 
                         {/* Filter the fleets by search term */}
                         <table className="w-full text-left border-collapse bg-gray-700 rounded overflow-hidden">
                           <thead>
                             <tr className="bg-gray-600 text-white">
+                              <th className="px-4 py-2 border">Select</th>
                               <th className="px-4 py-2 border">S. No</th>
                               <th className="px-4 py-2 border">_id</th>
                               <th className="px-4 py-2 border">
@@ -469,11 +595,28 @@ const Booking = () => {
                               (fleetItem, i) => {
                                 const { _id, flightTime, fleetDetails } =
                                   fleetItem;
+
+                                // Determine if this row is the selected fleet
+                                const isSelected =
+                                  selectedFleetForSegments[idx]?.fleetId ===
+                                  _id;
+
                                 return (
                                   <tr
                                     key={_id || i}
-                                    className="border-t border-gray-500 hover:bg-gray-600"
+                                    className={`border-t border-gray-500 hover:bg-gray-600 ${
+                                      isSelected ? "bg-gray-600" : ""
+                                    }`}
                                   >
+                                    <td className="px-4 py-2 border text-center">
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() =>
+                                          handleFleetSelect(idx, _id, fleetItem)
+                                        }
+                                      />
+                                    </td>
                                     <td className="px-4 py-2 border">
                                       {i + 1}
                                     </td>

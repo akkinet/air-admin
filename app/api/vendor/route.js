@@ -22,9 +22,7 @@ export async function POST(req) {
       branches, // Array of branches
       businessDescription,
     } = body;
-
     const vendorsCollection = db.collection("AIR_VENDORS");
-
     // Insert the vendor data into MongoDB
     const vendorData = {
       firstName,
@@ -45,10 +43,8 @@ export async function POST(req) {
       branches: [], // Initialize branches as empty (will be updated after S3 upload)
       createdAt: new Date().toISOString(),
     };
-
     const result = await vendorsCollection.insertOne(vendorData);
     const vendorId = result.insertedId; // Get the auto-generated _id from MongoDB
-
     // Upload branch files to S3 (if applicable)
     const s3 = new S3Client();
     if (branches && branches.length > 0) {
@@ -69,7 +65,6 @@ export async function POST(req) {
         await s3.send(new PutObjectCommand(params));
         branch.file = `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_S3_BUCKET}/${newFileName}`;
       }
-
       // Update the vendor document with the branches (including S3 file URLs)
       await vendorsCollection.updateOne(
         { _id: vendorId },
