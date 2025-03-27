@@ -196,7 +196,7 @@ export default function ImageGallery() {
       if (isVideo) {
         previewElement = (
           <video
-            src={s3Url}
+            src={s3Url || " "}
             controls
             className="w-full h-full rounded-xl object-cover"
           />
@@ -204,7 +204,7 @@ export default function ImageGallery() {
       } else {
         previewElement = (
           <img
-            src={s3Url}
+            src={s3Url || " "}
             alt={viewLabel}
             className="w-full h-full object-cover rounded-xl"
           />

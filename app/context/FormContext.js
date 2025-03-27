@@ -7,8 +7,8 @@ export const FormProvider = ({ children }) => {
   const [formData, setFormData] = useState({
     fleetDetails: {},
     aircraftGallery: {},
-    travelmodes:{},
     additionalAmenities: {},
+    travelModes:{}
   });
 
   const updateFormData = (section, data) => {

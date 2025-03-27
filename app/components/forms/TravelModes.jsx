@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useFormContext } from "../../context/FormContext"; // <-- Import your context
 
 // A configuration array for the modes, so we can loop more cleanly
 const modes = [
@@ -16,73 +17,72 @@ const modes = [
 ];
 
 export default function TravelModes() {
+  const { formData, updateFormData } = useFormContext();
   const [selectedModes, setSelectedModes] = useState([]);
   const [modeDetails, setModeDetails] = useState({});
 
-  // Load from session storage on mount
+  // On mount, load travelModes from either sessionStorage or context
   useEffect(() => {
+    // If sessionStorage has data, prefer that; otherwise fallback to context
     const savedData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    const existingModes = savedData.travelModes || {};
+    const existingModes = savedData.travelModes || formData.travelModes || {};
 
-    // Create a fresh modeDetails object for all modes
-    // if the user previously had some data for a mode, we reuse it
+    // Create fresh local state for all possible modes
     const newModeDetails = {};
     modes.forEach((m) => {
       newModeDetails[m.id] = existingModes[m.id] || {};
     });
-
     setModeDetails(newModeDetails);
 
-    // figure out which modes are "selected" (non-empty) in storage
+    // Build an array of which mode IDs have data
     const selected = Object.keys(existingModes).filter(
       (modeId) => Object.keys(existingModes[modeId] || {}).length > 0
     );
     setSelectedModes(selected);
+
+    // Also ensure context is in sync if we loaded from session
+    if (savedData.travelModes) {
+      updateFormData("travelModes", savedData.travelModes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Toggling a mode’s checkbox
   const handleCheckboxChange = (modeId) => {
-    let updated;
+    let updatedSelected;
     if (selectedModes.includes(modeId)) {
-      // Mode was selected, so uncheck it
-      updated = selectedModes.filter((id) => id !== modeId);
-      // Clear out the data in that mode, if you want to truly reset
+      // If it was selected, uncheck it
+      updatedSelected = selectedModes.filter((id) => id !== modeId);
+      // Clear out data from that mode
       setModeDetails((prev) => ({ ...prev, [modeId]: {} }));
     } else {
-      // Mode was not selected, so add it
-      updated = [...selectedModes, modeId];
+      // If it was not selected, select it
+      updatedSelected = [...selectedModes, modeId];
     }
 
-    setSelectedModes(updated);
+    setSelectedModes(updatedSelected);
 
-    // Immediately update sessionStorage
+    // Immediately update local “travelModes” + sessionStorage + context
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    const travelModes = existingFormData.travelModes || {};
-    if (!updated.includes(modeId)) {
-      // user just unchecked it => clear it
+    const travelModes = existingFormData.travelModes || { ...formData.travelModes };
+
+    // If unselected now, clear data
+    if (!updatedSelected.includes(modeId)) {
       travelModes[modeId] = {};
     } else {
-      // user just checked it => ensure a data object
+      // If newly selected, ensure the data object exists
       travelModes[modeId] = modeDetails[modeId] || {};
     }
 
     existingFormData.travelModes = travelModes;
     sessionStorage.setItem("formData", JSON.stringify(existingFormData));
+    updateFormData("travelModes", travelModes); // Keep context in sync
   };
 
   // User typing into any numeric field
   const handleInputChange = (modeId, field, value) => {
-    // We store each field as an object for your nested approach:
-    // e.g.  cargo: {
-    //   "Weight in (TONS)": { "Weight in (TONS)": "850" },
-    //   "Space": { "Length": "20", "Height": "580", "Width": "25" }
-    // }
-    // But in your code, you’re storing "Length (ft)" => as "Space": { "Length": "value" } if it has "(ft)" in the label.
-    // We'll continue that logic:
-
     const isFtField = field.includes("(ft)");
     const cleanedField = field.replace(" (ft)", "");
-
     const prevModeData = modeDetails[modeId] || {};
     let updatedModeData = {};
 
@@ -106,24 +106,29 @@ export default function TravelModes() {
       };
     }
 
+    // Update local state
     setModeDetails((prev) => ({
       ...prev,
       [modeId]: updatedModeData,
     }));
 
-    // Update in session storage
+    // Also update session storage + context
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
-    const travelModes = existingFormData.travelModes || {};
+    const travelModes = existingFormData.travelModes || { ...formData.travelModes };
     travelModes[modeId] = updatedModeData;
     existingFormData.travelModes = travelModes;
     sessionStorage.setItem("formData", JSON.stringify(existingFormData));
+    updateFormData("travelModes", travelModes);
   };
 
-  // On "Next," we store the final data. This is optional if you already store as user types
+  // On "Next," store final data (optional if you already store on each change)
   const handleNextClick = () => {
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
     existingFormData.travelModes = modeDetails;
+
+    // Update session storage + context
     sessionStorage.setItem("formData", JSON.stringify(existingFormData));
+    updateFormData("travelModes", modeDetails);
   };
 
   return (
@@ -157,7 +162,6 @@ export default function TravelModes() {
         {/* Render inputs for each selected mode */}
         <div className="space-y-8">
           {selectedModes.map((modeId) => {
-            // find the mode config
             const thisMode = modes.find((m) => m.id === modeId);
             if (!thisMode) return null;
 

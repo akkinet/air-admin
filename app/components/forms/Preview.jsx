@@ -84,7 +84,8 @@ export default function PreviewPage() {
       const parsedData = JSON.parse(savedData);
       updateFormData("fleetDetails", parsedData.fleetDetails);
       updateFormData("aircraftGallery", parsedData.aircraftGallery);
-      updateFormData("travelmodes", parsedData.travelModes);
+      // updateFormData("travelmodes", parsedData.travelModes);
+      updateFormData("travelModes", parsedData.travelModes);
       updateFormData("additionalAmenities", parsedData.additionalAmenities);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
