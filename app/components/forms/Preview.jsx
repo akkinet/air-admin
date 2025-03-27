@@ -84,15 +84,13 @@ export default function PreviewPage() {
       const parsedData = JSON.parse(savedData);
       updateFormData("fleetDetails", parsedData.fleetDetails);
       updateFormData("aircraftGallery", parsedData.aircraftGallery);
-      // updateFormData("travelmodes", parsedData.travelModes);
       updateFormData("travelModes", parsedData.travelModes);
       updateFormData("additionalAmenities", parsedData.additionalAmenities);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = () => {
-    sessionStorage.removeItem("formData"); // Clear form data
+    sessionStorage.removeItem("formData"); 
     console.log("Form Submitted Data:", formData);
     alert("Form submitted successfully!");
     setIsSubmitted(true);

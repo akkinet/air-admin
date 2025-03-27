@@ -21,13 +21,9 @@ export default function TravelModes() {
   const [selectedModes, setSelectedModes] = useState([]);
   const [modeDetails, setModeDetails] = useState({});
 
-  // On mount, load travelModes from either sessionStorage or context
   useEffect(() => {
-    // If sessionStorage has data, prefer that; otherwise fallback to context
     const savedData = JSON.parse(sessionStorage.getItem("formData")) || {};
     const existingModes = savedData.travelModes || formData.travelModes || {};
-
-    // Create fresh local state for all possible modes
     const newModeDetails = {};
     modes.forEach((m) => {
       newModeDetails[m.id] = existingModes[m.id] || {};
@@ -39,24 +35,18 @@ export default function TravelModes() {
       (modeId) => Object.keys(existingModes[modeId] || {}).length > 0
     );
     setSelectedModes(selected);
-
-    // Also ensure context is in sync if we loaded from session
     if (savedData.travelModes) {
       updateFormData("travelModes", savedData.travelModes);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Toggling a mode’s checkbox
   const handleCheckboxChange = (modeId) => {
     let updatedSelected;
     if (selectedModes.includes(modeId)) {
-      // If it was selected, uncheck it
       updatedSelected = selectedModes.filter((id) => id !== modeId);
-      // Clear out data from that mode
       setModeDetails((prev) => ({ ...prev, [modeId]: {} }));
     } else {
-      // If it was not selected, select it
       updatedSelected = [...selectedModes, modeId];
     }
 
@@ -65,12 +55,9 @@ export default function TravelModes() {
     // Immediately update local “travelModes” + sessionStorage + context
     const existingFormData = JSON.parse(sessionStorage.getItem("formData")) || {};
     const travelModes = existingFormData.travelModes || { ...formData.travelModes };
-
-    // If unselected now, clear data
     if (!updatedSelected.includes(modeId)) {
       travelModes[modeId] = {};
     } else {
-      // If newly selected, ensure the data object exists
       travelModes[modeId] = modeDetails[modeId] || {};
     }
 
